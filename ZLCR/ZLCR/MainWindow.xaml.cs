@@ -82,8 +82,33 @@ namespace ZLCR
                 {
                     this.Dispatcher.Invoke(new Action(() =>
                     {
-                        PortName = _portChoose.SelectedItem.ToString();
-                        text.Text = zlcr_Mag[4].ToString("f2") + "\r\n" + zlcr_Phase[4].ToString("f2");
+                        if(_portChoose.SelectedIndex != -1)
+                            PortName = _portChoose.SelectedItem.ToString();
+
+                        double Mag = 0;
+                        double Phase = 0; 
+
+                        if(zlcr_Phase[4]<100000000)
+                            if(zlcr_Phase[4]>170)
+                            {
+                                text.Text = zlcr_Mag[4].ToString("f2") + " ohm\n" + zlcr_Phase[4].ToString("f2") + " '";
+                            }
+                            else if(zlcr_Phase[4] > 120)
+                            {
+                                Mag = zlcr_Mag[4] / 2 / Math.PI / 1000 * 1000000;
+                                text.Text = zlcr_Mag[4].ToString("f2") + " uH\n" + zlcr_Phase[4].ToString("f2") + " '";
+                            }
+                            else
+                            {
+                                Mag = 1 / zlcr_Mag[4] / 2 / Math.PI / 1000 * 1000000;
+                                //Mag = zlcr_Mag[4];
+                                text.Text = Mag.ToString("f2") + " uF\n" + zlcr_Phase[4].ToString("f2") + " '";
+                            }
+                        else
+                        {
+                            text.Text = "∞ ohm\n '";
+                        }
+
                     }));
 
                     if (IsPortOpen)
@@ -140,7 +165,14 @@ namespace ZLCR
                 catch (Exception ex)
                 {
                     IsPortOpen = false;
-                    this.Dispatcher.Invoke(new Action(() => { _portOpen.Content = "连接"; }));
+                    try
+                    {
+                        this.Dispatcher.Invoke(new Action(() => { _portOpen.Content = "连接"; }));
+                    }
+                    catch
+                    {
+                        
+                    }
                     MessageBox.Show(ex.Message);
                 }
             }

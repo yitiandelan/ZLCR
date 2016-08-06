@@ -5,6 +5,6 @@
     <Grid>
         <ComboBox x:Name="_portChoose" HorizontalAlignment="Left" Margin="60,10,0,0" VerticalAlignment="Top" Width="90"/>
         <Button x:Name="_portOpen" Content="连接" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="45" Height="21" Click="Button_Click"/>
-        <TextBox x:Name="text" HorizontalAlignment="Left" Height="76" Margin="10,61,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120" TextAlignment="Right"/>
+        <TextBox x:Name="text" HorizontalAlignment="Left" Height="248" Margin="10,61,0,0" TextWrapping="Wrap" Text="100,000.00" VerticalAlignment="Top" Width="497" TextAlignment="Right" FontSize="48"/>
     </Grid>
 </Window>
