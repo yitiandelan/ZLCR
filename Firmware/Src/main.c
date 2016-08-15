@@ -35,13 +35,17 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "BSP.h"
+#include "math.h"
+#include "arm_math.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
 I2S_HandleTypeDef hi2s3;
+DMA_HandleTypeDef hdma_i2s3_ext_rx;
+DMA_HandleTypeDef hdma_spi3_tx;
 
 SPI_HandleTypeDef hspi2;
 
@@ -52,7 +56,16 @@ osThreadId defaultTaskHandle;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+extern int16_t fifo[4][2048];
+extern float32_t iir1buf[4][128];
+extern float32_t iir1Av;
+extern float32_t freq;
 
+float32_t ans[4];
+float32_t y1i,y1q,y2i,y2q;
+uint8_t uarttxbuf[128];
+uint8_t uartrxbuf[128];
+uint16_t n;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -68,7 +81,8 @@ void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-
+extern void DSP_FIR_Init(void);
+extern void DSP_IIR_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -176,7 +190,7 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
   {
@@ -185,7 +199,7 @@ void SystemClock_Config(void)
 
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_I2S;
   PeriphClkInitStruct.PLLI2S.PLLI2SN = 192;
-  PeriphClkInitStruct.PLLI2S.PLLI2SM = 4;
+  PeriphClkInitStruct.PLLI2S.PLLI2SM = 6;
   PeriphClkInitStruct.PLLI2S.PLLI2SR = 2;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
@@ -229,7 +243,7 @@ static void MX_I2S3_Init(void)
   hi2s3.Init.Standard = I2S_STANDARD_PHILIPS;
   hi2s3.Init.DataFormat = I2S_DATAFORMAT_16B;
   hi2s3.Init.MCLKOutput = I2S_MCLKOUTPUT_ENABLE;
-  hi2s3.Init.AudioFreq = I2S_AUDIOFREQ_192K;
+  hi2s3.Init.AudioFreq = I2S_AUDIOFREQ_96K;
   hi2s3.Init.CPOL = I2S_CPOL_LOW;
   hi2s3.Init.ClockSource = I2S_CLOCK_PLL;
   hi2s3.Init.FullDuplexMode = I2S_FULLDUPLEXMODE_ENABLE;
@@ -289,8 +303,15 @@ static void MX_DMA_Init(void)
 {
   /* DMA controller clock enable */
   __HAL_RCC_DMA2_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA1_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+  /* DMA1_Stream7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream7_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream7_IRQn);
   /* DMA2_Stream7_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
@@ -307,10 +328,22 @@ static void MX_DMA_Init(void)
 static void MX_GPIO_Init(void)
 {
 
+  GPIO_InitTypeDef GPIO_InitStruct;
+
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PB12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 }
 
@@ -323,13 +356,33 @@ void StartDefaultTask(void const * argument)
 {
 
   /* USER CODE BEGIN 5 */
-	uint8_t buf[] = "yitiandelan.\r\n";
+	DSP_FIR_Init();
+	DSP_IIR_Init();
+	BSP_CODEC_Init();
+	BSP_CODEC_Start();
   /* Infinite loop */
   for(;;)
   {
-    osDelay(100);
+		osDelay(10);
+		
+		arm_mean_f32(iir1buf[0], 128, &y1i);
+		arm_mean_f32(iir1buf[1], 128, &y1q);
+		arm_mean_f32(iir1buf[2], 128, &y2i);
+		arm_mean_f32(iir1buf[3], 128, &y2q);
+		
+		y1i *= iir1Av;
+		y1q *= iir1Av;
+		y2i *= iir1Av;
+		y2q *= iir1Av;
+		
+		ans[0] = sqrtf((y1i*y1i + y1q*y1q)/(y2i*y2i + y2q*y2q));
+		ans[1] = 360.0/2.0/PI * acosf((y1i*y2i + y1q*y2q)/(sqrt((y1i*y1i + y1q*y1q)*(y2i*y2i + y2q*y2q))));
+		
+		n = snprintf((char*)uarttxbuf, 128, "{\"FREQ\":%.2f,\"MAG\":%f,\"PHASE\":%.4f}\n", freq, ans[0], ans[1]);
+//		n = snprintf((char*)uarttxbuf, 128, "{\"y1i\":%f,\"y1q\":%f,\"y2q\":%f,\"y2q\":%f}\n", y1i, y1q, y2i, y2q);
+		
 		HAL_UART_Init(&huart1);
-		HAL_UART_Transmit_DMA(&huart1, (uint8_t *)buf, 14);
+		HAL_UART_Transmit_DMA(&huart1, (uint8_t *)uarttxbuf, n);
   }
   /* USER CODE END 5 */ 
 }
