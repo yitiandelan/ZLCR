@@ -642,19 +642,14 @@
               <FilePath>..\Drivers\CMSIS\DSP_Lib\Source\FilteringFunctions\arm_fir_f32.c</FilePath>
             </File>
             <File>
-              <FileName>arm_mult_q15.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Drivers\CMSIS\DSP_Lib\Source\BasicMathFunctions\arm_mult_q15.c</FilePath>
-            </File>
-            <File>
               <FileName>DSP.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Src\DSP.c</FilePath>
             </File>
             <File>
-              <FileName>arm_mean_f32.c</FileName>
+              <FileName>arm_mult_f32.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Drivers\CMSIS\DSP_Lib\Source\StatisticsFunctions\arm_mean_f32.c</FilePath>
+              <FilePath>..\Drivers\CMSIS\DSP_Lib\Source\BasicMathFunctions\arm_mult_f32.c</FilePath>
             </File>
           </Files>
         </Group>

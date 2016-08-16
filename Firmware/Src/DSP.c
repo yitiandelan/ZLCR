@@ -1,7 +1,7 @@
 #include "stm32f4xx_hal.h"
 #include "arm_math.h"
 
-int16_t output[4][1024];
+float32_t output[4][1024];
 float32_t fir1buf[4][512];
 float32_t fir2buf[4][128];
 float32_t iir1buf[4][128];
@@ -62,7 +62,7 @@ void DSP_IIR_Init(void)
 
 void fir1_f32(
 const arm_fir_instance_f32 * S,
-q15_t * pSrc,
+float32_t * pSrc,
 float32_t * pDst,
 uint32_t blockSize)
 {
@@ -97,10 +97,10 @@ uint32_t blockSize)
 			*p1++ = *p2++;
 			*p1++ = *p2++;
 		}
-		*p1++ = *(pSrc+i);
-		*p1++ = *(pSrc+i+1);
-//		arm_copy_f32(S->pState+2, S->pState, 16-2);
-//		arm_q15_to_float( pSrc+i, S->pState+16-2, 2);
+		p2 = pSrc+i;
+		*p1++ = *p2++;
+		*p1++ = *p2++;
+		
 		arm_mat_mult_f32( &Coeffs, &State, &Dst);
 		Dst.pData ++;
 	}
@@ -140,18 +140,18 @@ uint32_t blockSize)
 			*p1++ = *p2++;
 			*p1++ = *p2++;
 		}
-		*p1++ = *(pSrc+i);
-		*p1++ = *(pSrc+i+1);
-		*p1++ = *(pSrc+i+2);
-		*p1++ = *(pSrc+i+3);
-//		arm_copy_f32(S->pState+4, S->pState, 36-4);
-//		arm_copy_f32(pSrc+i, S->pState+36-4, 4);
+		p2 = pSrc+i;
+		*p1++ = *p2++;
+		*p1++ = *p2++;
+		*p1++ = *p2++;
+		*p1++ = *p2++;
+		
 		arm_mat_mult_f32( &Coeffs, &State, &Dst);
 		Dst.pData ++;
 	}
 }
 
-void DSP_I2S_Callback(int16_t* pt1, int16_t* pt2, int16_t* pt3, int16_t* pt4, uint16_t offset)
+void DSP_I2S_Callback(float* pt1, float* pt2, float* pt3, float* pt4, uint16_t offset)
 {
 	uint16_t i;
 	
@@ -160,10 +160,10 @@ void DSP_I2S_Callback(int16_t* pt1, int16_t* pt2, int16_t* pt3, int16_t* pt4, ui
 	pt3 += offset;
 	pt4 += offset;
 	
-	arm_mult_q15(pt1, pt3, output[0]+offset, 512);
-	arm_mult_q15(pt1, pt4, output[1]+offset, 512);
-	arm_mult_q15(pt2, pt3, output[2]+offset, 512);
-	arm_mult_q15(pt2, pt4, output[3]+offset, 512);
+	arm_mult_f32(pt1, pt3, output[0]+offset, 512);
+	arm_mult_f32(pt1, pt4, output[1]+offset, 512);
+	arm_mult_f32(pt2, pt3, output[2]+offset, 512);
+	arm_mult_f32(pt2, pt4, output[3]+offset, 512);
 	
 	for(i=0;i<4;i++)
 	{

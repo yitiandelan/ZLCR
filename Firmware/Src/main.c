@@ -56,7 +56,6 @@ osThreadId defaultTaskHandle;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-extern int16_t fifo[4][2048];
 extern float32_t iir1buf[4][128];
 extern float32_t iir1Av;
 extern float32_t freq;
@@ -113,7 +112,9 @@ int main(void)
   MX_USART1_UART_Init();
 
   /* USER CODE BEGIN 2 */
-
+	DSP_FIR_Init();
+	DSP_IIR_Init();
+	BSP_CODEC_Init();
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -356,33 +357,31 @@ void StartDefaultTask(void const * argument)
 {
 
   /* USER CODE BEGIN 5 */
-	DSP_FIR_Init();
-	DSP_IIR_Init();
-	BSP_CODEC_Init();
 	BSP_CODEC_Start();
   /* Infinite loop */
   for(;;)
   {
-		osDelay(10);
-		
-		arm_mean_f32(iir1buf[0], 128, &y1i);
-		arm_mean_f32(iir1buf[1], 128, &y1q);
-		arm_mean_f32(iir1buf[2], 128, &y2i);
-		arm_mean_f32(iir1buf[3], 128, &y2q);
-		
-		y1i *= iir1Av;
-		y1q *= iir1Av;
-		y2i *= iir1Av;
-		y2q *= iir1Av;
+		y1i = iir1buf[0][0] * iir1Av;
+		y1q = iir1buf[1][0] * iir1Av;
+		y2i = iir1buf[2][0] * -iir1Av;
+		y2q = iir1buf[3][0] * -iir1Av;
 		
 		ans[0] = sqrtf((y1i*y1i + y1q*y1q)/(y2i*y2i + y2q*y2q));
 		ans[1] = 360.0/2.0/PI * acosf((y1i*y2i + y1q*y2q)/(sqrt((y1i*y1i + y1q*y1q)*(y2i*y2i + y2q*y2q))));
 		
-		n = snprintf((char*)uarttxbuf, 128, "{\"FREQ\":%.2f,\"MAG\":%f,\"PHASE\":%.4f}\n", freq, ans[0], ans[1]);
-//		n = snprintf((char*)uarttxbuf, 128, "{\"y1i\":%f,\"y1q\":%f,\"y2q\":%f,\"y2q\":%f}\n", y1i, y1q, y2i, y2q);
+		if((y1i*y2q - y2i*y1q) < 0) ans[1] = -ans[1];
+		if(ans[0]>1000000000) ans[0] = 1000000000;
 		
-		HAL_UART_Init(&huart1);
-		HAL_UART_Transmit_DMA(&huart1, (uint8_t *)uarttxbuf, n);
+		osDelay(20);
+		n = snprintf((char*)uarttxbuf, 128, "{\"FREQ\":%e,\"MAG\":%e,\"PHASE\":%e}\n", freq, ans[0], ans[1]);
+//		osDelay(10);
+//		n = snprintf((char*)uarttxbuf, 128, "{\"FREQ\":%e,\"y1i\":%e,\"y1q\":%e,\"y2q\":%e,\"y2q\":%e}\n", freq, y1i, y1q, y2i, y2q);
+		
+		if(n > 0)
+		{
+			HAL_UART_Init(&huart1);
+			HAL_UART_Transmit_DMA(&huart1, (uint8_t *)uarttxbuf, n);
+		}
   }
   /* USER CODE END 5 */ 
 }
