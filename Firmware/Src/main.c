@@ -56,8 +56,8 @@ osThreadId defaultTaskHandle;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-extern float32_t iir1buf[4][128];
-extern float32_t iir1Av;
+extern float32_t iir1buf[4][1024];
+extern float32_t iir2buf[4][32];
 extern float32_t freq;
 
 float32_t ans[4];
@@ -80,7 +80,6 @@ void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-extern void DSP_FIR_Init(void);
 extern void DSP_IIR_Init(void);
 /* USER CODE END PFP */
 
@@ -112,7 +111,6 @@ int main(void)
   MX_USART1_UART_Init();
 
   /* USER CODE BEGIN 2 */
-	DSP_FIR_Init();
 	DSP_IIR_Init();
 	BSP_CODEC_Init();
   /* USER CODE END 2 */
@@ -361,18 +359,17 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-		y1i = iir1buf[0][0] * iir1Av;
-		y1q = iir1buf[1][0] * iir1Av;
-		y2i = iir1buf[2][0] * -iir1Av;
-		y2q = iir1buf[3][0] * -iir1Av;
+		y1i =  iir2buf[0][0];
+		y1q =  iir2buf[1][0];
+		y2i = -iir2buf[2][0];
+		y2q = -iir2buf[3][0];
 		
 		ans[0] = sqrtf((y1i*y1i + y1q*y1q)/(y2i*y2i + y2q*y2q));
 		ans[1] = 360.0/2.0/PI * acosf((y1i*y2i + y1q*y2q)/(sqrt((y1i*y1i + y1q*y1q)*(y2i*y2i + y2q*y2q))));
 		
 		if((y1i*y2q - y2i*y1q) < 0) ans[1] = -ans[1];
-		if(ans[0]>1000000000) ans[0] = 1000000000;
 		
-		osDelay(20);
+		osDelay(50);
 		n = snprintf((char*)uarttxbuf, 128, "{\"FREQ\":%e,\"MAG\":%e,\"PHASE\":%e}\n", freq, ans[0], ans[1]);
 //		osDelay(10);
 //		n = snprintf((char*)uarttxbuf, 128, "{\"FREQ\":%e,\"y1i\":%e,\"y1q\":%e,\"y2q\":%e,\"y2q\":%e}\n", freq, y1i, y1q, y2i, y2q);
