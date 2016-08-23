@@ -72,7 +72,7 @@ namespace ZLCR
                         {
                             if (mag > 10000)
                                 mag = 10000;
-                            text.Text = string.Format("{0:N2} Hz\n{1:N3} ohm\n{2:N2} °", freq, mag*1000, phase);
+                            text.Text = string.Format("{0:N2} Hz\n{1:N4} ohm\n{2:N4} °", freq, mag*1000, phase*180/Math.PI);
                         }));
                     }
                 }
@@ -81,6 +81,13 @@ namespace ZLCR
                     //MessageBox.Show(ex.Message);
                 }
             }
+        }
+
+        private void textBox_KeyUp(object sender, KeyEventArgs e)
+        {
+            if(e.Key == System.Windows.Input.Key.Enter)
+                if (ttyS0.IsOpen)
+                    ttyS0.WriteLine(textBox.Text);
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -95,7 +102,14 @@ namespace ZLCR
                 _portOpen.Content = "关闭";
                 ttyS0.PortName = _portChoose.SelectedItem.ToString();
                 ttyS0.Open();
+                //ttyS0.WriteLine("reboot");
             }
+        }
+
+        private void button_Click_1(object sender, RoutedEventArgs e)
+        {
+            if (ttyS0.IsOpen)
+                ttyS0.WriteLine(textBox.Text);
         }
     }
 }

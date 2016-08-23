@@ -38,6 +38,7 @@
 #include "BSP.h"
 #include "math.h"
 #include "arm_math.h"
+#include "stdarg.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -51,8 +52,10 @@ SPI_HandleTypeDef hspi2;
 
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_tx;
+DMA_HandleTypeDef hdma_usart1_rx;
 
 osThreadId defaultTaskHandle;
+osThreadId myTask02Handle;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -60,11 +63,10 @@ extern float32_t iir1buf[4][1024];
 extern float32_t iir2buf[4][32];
 extern float32_t freq;
 
-float32_t ans[4];
-float32_t y1i,y1q,y2i,y2q;
-uint8_t uarttxbuf[128];
+float32_t ans[8];
+uint8_t uarttxbuf[512];
 uint8_t uartrxbuf[128];
-uint16_t n;
+uint8_t uartfifo[512];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -77,6 +79,7 @@ static void MX_I2S3_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
 void StartDefaultTask(void const * argument);
+void SysTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -84,7 +87,25 @@ extern void DSP_IIR_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-
+void print(const char * format,...)
+{
+	static uint16_t i = 0;
+	uint16_t n;
+	va_list args;
+	
+	if(!hdma_usart1_tx.Instance->NDTR)
+		i = 0;
+	
+	va_start(args,format);
+	n = vsnprintf((char*)uarttxbuf+i, 512-i, format, args);
+	va_end(args);
+	i = (i+n)&0x1ff;
+	
+	HAL_DMA_Abort(&hdma_usart1_tx);
+	huart1.gState = HAL_UART_STATE_READY;
+	n += hdma_usart1_tx.Instance->NDTR;
+	HAL_UART_Transmit_DMA(&huart1, (uint8_t*)uarttxbuf+i-n , n);
+}
 /* USER CODE END 0 */
 
 int main(void)
@@ -113,6 +134,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	DSP_IIR_Init();
 	BSP_CODEC_Init();
+	BSP_CODEC_Start();
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -129,8 +151,12 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityIdle, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+
+  /* definition and creation of myTask02 */
+  osThreadDef(myTask02, SysTask, osPriorityNormal, 0, 256);
+  myTask02Handle = osThreadCreate(osThread(myTask02), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -198,7 +224,7 @@ void SystemClock_Config(void)
 
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_I2S;
   PeriphClkInitStruct.PLLI2S.PLLI2SN = 192;
-  PeriphClkInitStruct.PLLI2S.PLLI2SM = 6;
+  PeriphClkInitStruct.PLLI2S.PLLI2SM = 4;
   PeriphClkInitStruct.PLLI2S.PLLI2SR = 2;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
@@ -242,7 +268,7 @@ static void MX_I2S3_Init(void)
   hi2s3.Init.Standard = I2S_STANDARD_PHILIPS;
   hi2s3.Init.DataFormat = I2S_DATAFORMAT_16B;
   hi2s3.Init.MCLKOutput = I2S_MCLKOUTPUT_ENABLE;
-  hi2s3.Init.AudioFreq = I2S_AUDIOFREQ_96K;
+  hi2s3.Init.AudioFreq = I2S_AUDIOFREQ_192K;
   hi2s3.Init.CPOL = I2S_CPOL_LOW;
   hi2s3.Init.ClockSource = I2S_CLOCK_PLL;
   hi2s3.Init.FullDuplexMode = I2S_FULLDUPLEXMODE_ENABLE;
@@ -311,6 +337,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream7_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream7_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream7_IRQn);
+  /* DMA2_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   /* DMA2_Stream7_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
@@ -355,32 +384,82 @@ void StartDefaultTask(void const * argument)
 {
 
   /* USER CODE BEGIN 5 */
-	BSP_CODEC_Start();
+	
   /* Infinite loop */
   for(;;)
   {
-		y1i =  iir2buf[0][0];
-		y1q =  iir2buf[1][0];
-		y2i = -iir2buf[2][0];
-		y2q = -iir2buf[3][0];
-		
-		ans[0] = sqrtf((y1i*y1i + y1q*y1q)/(y2i*y2i + y2q*y2q));
-		ans[1] = 360.0/2.0/PI * acosf((y1i*y2i + y1q*y2q)/(sqrt((y1i*y1i + y1q*y1q)*(y2i*y2i + y2q*y2q))));
-		
-		if((y1i*y2q - y2i*y1q) < 0) ans[1] = -ans[1];
-		
-		osDelay(50);
-		n = snprintf((char*)uarttxbuf, 128, "{\"FREQ\":%e,\"MAG\":%e,\"PHASE\":%e}\n", freq, ans[0], ans[1]);
-//		osDelay(10);
-//		n = snprintf((char*)uarttxbuf, 128, "{\"FREQ\":%e,\"y1i\":%e,\"y1q\":%e,\"y2q\":%e,\"y2q\":%e}\n", freq, y1i, y1q, y2i, y2q);
-		
-		if(n > 0)
-		{
-			HAL_UART_Init(&huart1);
-			HAL_UART_Transmit_DMA(&huart1, (uint8_t *)uarttxbuf, n);
-		}
+//		y1i =  iir2buf[0][0]; 	y1q =  iir2buf[1][0];		// a+bi
+//		y2i = -iir2buf[2][0];		y2q = -iir2buf[3][0];		// c+di
+//		ans[0] = (y1i*y2i + y1q*y2q) / (y2i*y2i + y2q*y2q);
+//		ans[1] = (y1q*y2i - y1i*y2q) / (y2i*y2i + y2q*y2q);
+		osDelay(10);
   }
   /* USER CODE END 5 */ 
+}
+
+/* SysTask function */
+void SysTask(void const * argument)
+{
+  /* USER CODE BEGIN SysTask */
+	uint16_t n,tmp,pt=0;
+	uint16_t i=128;
+	
+	HAL_UART_Receive_DMA(&huart1, (uint8_t *)uartrxbuf, 128);
+	HAL_UART_Transmit_DMA(&huart1, (uint8_t *)uarttxbuf, 0);
+	
+	print("ZLCR rev.b Copyright(c)yitiandelan.\r\n");
+	print("hash:6f4e6a3900d9f60e78fcd47e7c67518d3497f7b7\r\n");
+  /* Infinite loop */
+  for(;;)
+  {
+		n = huart1.hdmarx->Instance->NDTR;
+		if(n < i)
+		{
+			memcpy(uartfifo+pt, uartrxbuf+128-i, i-n);
+			pt += i-n;
+			pt &= 0xff;
+			i = n;
+			
+			for(tmp=0;tmp<=pt;tmp++)
+				if(uartfifo[tmp] == '\n')
+				{
+					if(!strncmp((char*)uartfifo, "reboot\n", 7))
+						HAL_NVIC_SystemReset();
+					
+					if(!strncmp((char*)uartfifo, "freq\n", 5))
+						print("%f Hz\n", freq);
+					
+					if(!strncmp((char*)uartfifo, "zlcr\n", 5))
+						for(; huart1.hdmarx->Instance->NDTR == i; print("{\"FREQ\":%e,\"MAG\":%e,\"PHASE\":%e}\n", freq, ans[2], ans[3]))
+							osDelay(20);
+					else if(!strncmp((char*)uartfifo, "zlcr -f ", 8))
+						if(sscanf((char*)uartfifo+8, "%f", &freq))
+							for(BSP_Setfreq(freq); huart1.hdmarx->Instance->NDTR == i; print("{\"FREQ\":%e,\"MAG\":%e,\"PHASE\":%e}\n", freq, ans[2], ans[3]))
+								osDelay(20);
+					
+					if(!strncmp((char*)uartfifo, "zlcr -raw\n", 10))
+						for(; huart1.hdmarx->Instance->NDTR == i; print("{\"FREQ\":%e,\"a\":%e,\"b\":%e,\"c\":%e,\"d\":%e}\n", freq, ans[4], ans[5], ans[6], ans[7]))
+							osDelay(20);
+					else if(!strncmp((char*)uartfifo, "zlcr -raw -f ", 13))
+						if(sscanf((char*)uartfifo+13, "%f", &freq))
+							for(BSP_Setfreq(freq); huart1.hdmarx->Instance->NDTR == i; print("{\"FREQ\":%e,\"a\":%e,\"b\":%e,\"c\":%e,\"d\":%e}\n", freq, ans[4], ans[5], ans[6], ans[7]))
+								osDelay(20);
+					
+					pt = 0;
+					break;
+				}
+		}
+		else if(n > i)
+		{
+			memcpy(uartfifo+pt, uartrxbuf+128-i, i);
+			pt += i;
+			pt &= 0xff;
+			i = 128;
+		}
+		else
+			osDelay(1);
+  }
+  /* USER CODE END SysTask */
 }
 
 /**

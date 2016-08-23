@@ -17,6 +17,7 @@ ttyS0.flushInput()
 ttyS0.flushOutput()
 
 print('\nstart\n')
+ttyS0.write(b'zlcr -f 10000.0\n')
 
 while ttyS0.isOpen():
     try:
