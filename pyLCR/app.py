@@ -1,4 +1,4 @@
-import serial
+﻿import serial
 import time
 import json
 import matplotlib.pyplot as plt
@@ -31,7 +31,7 @@ while ttyS0.isOpen():
             if(str1[0] == '{' and str1[-1] == '}' and str1.isprintable()):
                 js.pop(0)
                 js.append(json.loads(str1))
-                str1 = '{:.2f} Hz, {:.6f} kohm, {:.4f} °'.format(js[-1]['FREQ'], js[-1]['MAG'], js[-1]['PHASE'])
+                str1 = '{:.2f} Hz, {:.6f} kohm, {:.4f} °'.format(js[-1]['FREQ'], js[-1]['MAG'], js[-1]['PHASE']*180/3.141592654)
                 print(str1)
         else:
             time.sleep(0.01)

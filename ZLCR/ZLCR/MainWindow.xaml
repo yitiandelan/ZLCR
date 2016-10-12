@@ -5,8 +5,9 @@
     <Grid>
         <ComboBox x:Name="_portChoose" HorizontalAlignment="Left" Margin="60,10,0,0" VerticalAlignment="Top" Width="90"/>
         <Button x:Name="_portOpen" Content="连接" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="45" Height="21" Click="Button_Click"/>
-        <TextBox x:Name="text" HorizontalAlignment="Left" Margin="10,61,0,0" TextWrapping="Wrap" Text="100,000.00" VerticalAlignment="Top" TextAlignment="Right" FontSize="48" Width="497"/>
-        <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="21" Margin="155,10,0,0" TextWrapping="Wrap" Text="zlcr" VerticalAlignment="Top" Width="209" FontSize="14.667" KeyUp="textBox_KeyUp"/>
+        <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="21" Margin="155,10,0,0" TextWrapping="Wrap" Text="zlcr -raw -f 1000" VerticalAlignment="Top" Width="209" FontSize="14.667" KeyUp="textBox_KeyUp"/>
         <Button x:Name="button" Content="发送" HorizontalAlignment="Left" Margin="369,10,0,0" VerticalAlignment="Top" Width="45" Height="21" Click="button_Click_1"/>
+        <TextBox x:Name="text" HorizontalAlignment="Left" Margin="2,61,0,0" TextWrapping="Wrap" Text="100,000.00" VerticalAlignment="Top" FontSize="24" Width="505" TextAlignment="Right" Height="248" TextDecorations="{x:Null}"/>
+        <TextBlock x:Name="textBlock" HorizontalAlignment="Left" Margin="10,61,0,0" TextWrapping="Wrap" Text="freq(Hz):&#xA;log|z|(ohm):&#xD;&#xA;phase(deg):&#xD;&#xA;Rs(ohm):&#xD;&#xA;Cs(pF):&#xD;&#xA;Ls(uH):&#xD;&#xA;D:&#xD;&#xA;Q:" VerticalAlignment="Top" FontSize="24" Height="248"/>
     </Grid>
 </Window>
