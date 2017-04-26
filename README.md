@@ -1,8 +1,8 @@
 # **ZLCR**
 ## low cost 100k LCR meter, base on digital Lock-in amplifier
 
-频率范围：1Hz~100kHz  ( 0.01Hz step );  
-阻抗范围：10m~10M Ohm ( 1k ref only );  
+频率范围：1Hz ~ 100kHz  ( 0.01Hz step );  
+阻抗范围：10m ~ 10M Ohm ( 1k ref only );  
 丢掉PSD和PGA，忘掉DFT、FFT和LMS算法吧，只需2个运放 + ADC/DAC，100k lcr meter带回家。核心算法类似soft define radio 中的数字下变频（数字IQ解调），更准确的定义是 DLIA（Digital Lock-in amplifier，数字锁定放大器）；其实就是将原来模拟器件完成的信号处理整个搬到了数字域，利用浮点运算能力 降低硬件复杂程度。相对于PSD方法，动态范围更高，当信号转换到数字域后，就无需再考虑噪声和失调，动态范围超过100dB；相对于FFT、LMS算法，16bit 4096point 已经算比较高了，而DLIA可以用浮点的 乘法器/CIC/FIR/IIR，DFT：Vi/Vq = 4095/0，DLIA： Vi/Vq = 4.0952341E3 / 1.234354E-2；此外 n=4096 fs=100khz 的FFT 分辨率≈24hz，而DLIA 不存在限制 举个栗子：80,000.00 Hz ~ 80,001.00 Hz扫频，分辨率0.01Hz；  
 
 自己绕的变压器：
