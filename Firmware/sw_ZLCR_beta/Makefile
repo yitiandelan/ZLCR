@@ -1,4 +1,4 @@
-STM_COMMON = ../sw_Lib
+STM_COMMON = ../../../sw_Lib
 
 # Sources
 SRCS =  main.c
@@ -66,9 +66,9 @@ SIZE = arm-none-eabi-size
 # Choose debug or release...
 # CFLAGS =  -g -O2 -Wall -std=c99 -lm -lnosys -specs=nosys.specs -u _printf_float -u _scanf_float
 # CFLAGS =  --specs=nano.specs -u_printf_float -u_scanf_float --specs=nosys.specs
-CFLAGS  = -g -O0 -Wall
+CFLAGS  = -g -O3 -Wall
 CFLAGS += -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
-CFLAGS += -specs=nano.specs -u_printf_float -u_scanf_float -specs=nosys.specs
+CFLAGS += -u_printf_float -u_scanf_float -specs=nano.specs
 # CFLAGS += -ffunction-sections -fdata-sections
 CFLAGS += -DUSE_HAL_DRIVER -DSTM32F411xE -DARM_MATH_CM4 -D__FPU_PRESENT=1U
 CFLAGS += -T./GCC/STM32F411CE_flash.lds
@@ -76,7 +76,6 @@ CFLAGS += -T./GCC/STM32F411CE_flash.lds
 LIBS  = -lm -lc -lnosys
 
 vpath %.c  ./Src
-vpath %.c  $(STM_COMMON)/CMSIS/Device/ST/STM32F4xx/Source/Templates
 vpath %.c  $(STM_COMMON)/STM32F4xx_HAL_Driver/Src
 vpath %.c  $(STM_COMMON)/Middlewares/Third_Party/FreeRTOS/Source
 vpath %.c  $(STM_COMMON)/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS
