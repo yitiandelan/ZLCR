@@ -1,49 +1,37 @@
 {
     "configurations": [
         {
-            "name": "Mac",
-            "includePath": [
-                "/usr/include",
-                "/usr/local/include"
-            ],
-            "browse": {
-                "limitSymbolsToIncludedHeaders": true,
-                "databaseFilename": ""
-            }
-        },
-        {
-            "name": "Linux",
-            "includePath": [
-                "/mnt/c/PortableApps/tcc/include/*",
-                "~/work/beta_Sync/sw_Lib/CMSIS/Include",
-                "~/work/beta_Sync/sw_Lib/CMSIS/Device/ST/STM32F4xx/Include",
-                "~/work/beta_Sync/sw_Lib/STM32F4xx_HAL_Driver/Inc",
-                "~/work/beta_Sync/sw_Lib/STM32F4xx_HAL_Driver/Inc/Legacy",
-                "~/work/beta_Sync/sw_Lib/Middlewares/Third_Party/FreeRTOS/Source/include",
-                "~/work/beta_Sync/sw_Lib/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS",
-                "~/work/beta_Sync/sw_Lib/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F"
-            ],
-            "browse": {
-                "limitSymbolsToIncludedHeaders": true,
-                "databaseFilename": ""
-            }
-        },
-        {
             "name": "Win32",
-            "includePath": [
-                "C:/PortableApps/tcc/include/*",
-                "C:/Users/tianlan/work/beta_Sync/sw_Lib/CMSIS/Include",
-                "C:/Users/tianlan/work/beta_Sync/sw_Lib/CMSIS/Device/ST/STM32F4xx/Include",
-                "C:/Users/tianlan/work/beta_Sync/sw_Lib/STM32F4xx_HAL_Driver/Inc",
-                "C:/Users/tianlan/work/beta_Sync/sw_Lib/STM32F4xx_HAL_Driver/Inc/Legacy",
-                "C:/Users/tianlan/work/beta_Sync/sw_Lib/Middlewares/Third_Party/FreeRTOS/Source/include",
-                "C:/Users/tianlan/work/beta_Sync/sw_Lib/Middlewares/Third_Party/FreeRTOS/Source",
-                "C:/Users/tianlan/work/beta_Sync/sw_Lib/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F"
-            ],
             "browse": {
-                "limitSymbolsToIncludedHeaders": true,
-                "databaseFilename": ""
-            }
+                "path": [
+                    "${workspaceFolder}"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/../sw_Lib/CMSIS/Include",
+                "${workspaceFolder}/../sw_Lib/CMSIS/Device/ST/STM32F4xx/Include",
+                "${workspaceFolder}/../sw_Lib/STM32F4xx_HAL_Driver/Inc",
+                "${workspaceFolder}/../sw_Lib/STM32F4xx_HAL_Driver/Inc/Legacy",
+                "${workspaceFolder}/../sw_Lib/Middlewares/Third_Party/FreeRTOS/Source",
+                "${workspaceFolder}/../sw_Lib/Middlewares/Third_Party/FreeRTOS/Source/include",
+                "${workspaceFolder}/../sw_Lib/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS",
+                "${workspaceFolder}/../sw_Lib/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F"
+            ],
+            "defines": [
+                "USE_HAL_DRIVER",
+                "STM32F411xE",
+                "ARM_MATH_CM4",
+                "__FPU_PRESENT=1U",
+                "__GNUC__",
+                "__VFP_FP__"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64"
         }
-    ]
+    ],
+    "version": 4
 }
