@@ -17,7 +17,8 @@
                 "${workspaceFolder}/../sw_Lib/Middlewares/Third_Party/FreeRTOS/Source",
                 "${workspaceFolder}/../sw_Lib/Middlewares/Third_Party/FreeRTOS/Source/include",
                 "${workspaceFolder}/../sw_Lib/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS",
-                "${workspaceFolder}/../sw_Lib/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F"
+                "${workspaceFolder}/../sw_Lib/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F",
+                "${workspaceFolder}/../sw_Lib/Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI"
             ],
             "defines": [
                 "USE_HAL_DRIVER",

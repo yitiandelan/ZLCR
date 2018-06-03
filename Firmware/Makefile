@@ -1,14 +1,14 @@
-STM_COMMON = ../../../sw_Lib
+STM_COMMON = ../../sw_Lib
 
 # Sources
 SRCS =  main.c
-SRCS += ZLCR.c
-SRCS += BSP.c
-SRCS += DSP.c
 SRCS += freertos.c
 SRCS += stm32f4xx_hal_msp.c
 SRCS += stm32f4xx_it.c
 SRCS += system_stm32f4xx.c
+SRCS += ZLCR_beta_bsp.c
+SRCS += ZLCR_beta_core.c
+SRCS += FreeRTOS_CLI.c
 
 # CMSIS OS
 SRCS += cmsis_os.c
@@ -52,11 +52,11 @@ SRCS += stm32f4xx_hal_dma_ex.c
 SRCS += stm32f4xx_hal_i2s.c
 
 # add startup file to build
-SRCS += ./GCC/startup_stm32f411xe.c
+SRCS += $(PROJ_NAME)/GCC/startup_stm32f411xe.c
 
 # Project name
-PROJ_NAME = 100k_ZLCR_beta
-OUTPATH = ./GCC/build
+PROJ_NAME = ZLCR_beta_freertos
+OUTPATH = ./build
 
 CC = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
@@ -68,31 +68,35 @@ SIZE = arm-none-eabi-size
 # CFLAGS =  --specs=nano.specs -u_printf_float -u_scanf_float --specs=nosys.specs
 CFLAGS  = -g -O3 -Wall
 CFLAGS += -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
-CFLAGS += -u_printf_float -u_scanf_float -specs=nano.specs
+CFLAGS += -u_printf_float -u_scanf_float
 # CFLAGS += -ffunction-sections -fdata-sections
-CFLAGS += -DUSE_HAL_DRIVER -DSTM32F411xE -DARM_MATH_CM4 -D__FPU_PRESENT=1U
-CFLAGS += -T./GCC/STM32F411CE_flash.lds
+CFLAGS += -D USE_HAL_DRIVER -D STM32F411xE -D ARM_MATH_CM4 -D __FPU_PRESENT=1U
+CFLAGS += -T $(PROJ_NAME)/GCC/STM32F411CE_flash.lds
 
 LIBS  = -lm -lc -lnosys
 
-vpath %.c  ./Src
+vpath %.c  ./ZLCR_beta_core
+vpath %.c  $(PROJ_NAME)/Src
 vpath %.c  $(STM_COMMON)/STM32F4xx_HAL_Driver/Src
 vpath %.c  $(STM_COMMON)/Middlewares/Third_Party/FreeRTOS/Source
 vpath %.c  $(STM_COMMON)/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS
 vpath %.c  $(STM_COMMON)/Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang
 vpath %.c  $(STM_COMMON)/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F
+vpath %.c  $(STM_COMMON)/Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI
 vpath %.c  $(STM_COMMON)/CMSIS/DSP_Lib/Source/FilteringFunctions
 vpath %.c  $(STM_COMMON)/CMSIS/DSP_Lib/Source/BasicMathFunctions
 
 # Includes
-CFLAGS += -I./Inc
-CFLAGS += -I$(STM_COMMON)/CMSIS/Include
-CFLAGS += -I$(STM_COMMON)/CMSIS/Device/ST/STM32F4xx/Include
-CFLAGS += -I$(STM_COMMON)/STM32F4xx_HAL_Driver/Inc
-CFLAGS += -I$(STM_COMMON)/STM32F4xx_HAL_Driver/Inc/Legacy
-CFLAGS += -I$(STM_COMMON)/Middlewares/Third_Party/FreeRTOS/Source/include
-CFLAGS += -I$(STM_COMMON)/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS
-CFLAGS += -I$(STM_COMMON)/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F
+CFLAGS += -I ./ZLCR_beta_core
+CFLAGS += -I $(PROJ_NAME)/Inc
+CFLAGS += -I $(STM_COMMON)/CMSIS/Include
+CFLAGS += -I $(STM_COMMON)/CMSIS/Device/ST/STM32F4xx/Include
+CFLAGS += -I $(STM_COMMON)/STM32F4xx_HAL_Driver/Inc
+CFLAGS += -I $(STM_COMMON)/STM32F4xx_HAL_Driver/Inc/Legacy
+CFLAGS += -I $(STM_COMMON)/Middlewares/Third_Party/FreeRTOS/Source/include
+CFLAGS += -I $(STM_COMMON)/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS
+CFLAGS += -I $(STM_COMMON)/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F
+CFLAGS += -I $(STM_COMMON)/Middlewares/Third_Party/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI
 
 OBJS = $(SRCS:.c=.o)
 
