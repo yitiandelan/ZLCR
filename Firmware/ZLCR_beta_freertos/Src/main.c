@@ -189,10 +189,23 @@ static BaseType_t prvZLCRCommand(char *pcWriteBuffer, size_t xWriteBufferLen, co
     return xReturn;
 }
 
+static BaseType_t prvRebootCommand(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString)
+{
+    HAL_NVIC_SystemReset();
+    return pdPASS;
+}
+
 static const CLI_Command_Definition_t xZLCRCmd = {
     "zlcr", /* The command string to type. */
     "zlcr:\r\n Open-Source-Hardware L-C-R Meter\r\n\r\n",
     prvZLCRCommand, /* The function to run. */
+    -1 /* No parameters are expected. */
+};
+
+static const CLI_Command_Definition_t xRebootCmd = {
+    "reboot", /* The command string to type. */
+    "reboot:\r\n Reboot the system.\r\n\r\n",
+    prvRebootCommand, /* The function to run. */
     -1 /* No parameters are expected. */
 };
 
@@ -294,8 +307,7 @@ int main(void)
     /* USER CODE END 3 */
 }
 
-/** System Clock Configuration
-*/
+/* System Clock Configuration */
 void SystemClock_Config(void)
 {
 
@@ -303,14 +315,12 @@ void SystemClock_Config(void)
     RCC_ClkInitTypeDef RCC_ClkInitStruct;
     RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
 
-    /**Configure the main internal regulator output voltage 
-*/
+    /* Configure the main internal regulator output voltage */
     __HAL_RCC_PWR_CLK_ENABLE();
 
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-    /**Initializes the CPU, AHB and APB busses clocks 
-*/
+    /* Initializes the CPU, AHB and APB busses clocks */
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSEState = RCC_HSE_ON;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
@@ -324,8 +334,7 @@ void SystemClock_Config(void)
         Error_Handler();
     }
 
-    /**Initializes the CPU, AHB and APB busses clocks 
-*/
+    /* Initializes the CPU, AHB and APB busses clocks */
     RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
     RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
@@ -346,12 +355,10 @@ void SystemClock_Config(void)
         Error_Handler();
     }
 
-    /**Configure the Systick interrupt time 
-*/
+    /* Configure the Systick interrupt time */
     HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq() / 1000);
 
-    /**Configure the Systick 
-*/
+    /* Configure the Systick */
     HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
     /* SysTick_IRQn interrupt configuration */
@@ -547,6 +554,7 @@ void SysTask(void const *argument)
     BaseType_t xReturned;
 
     FreeRTOS_CLIRegisterCommand(&xZLCRCmd);
+    FreeRTOS_CLIRegisterCommand(&xRebootCmd);
     pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 
     ZLCR_BSP_UART_PutString(pcWelcomeMessage, (unsigned short)strlen(pcWelcomeMessage));
