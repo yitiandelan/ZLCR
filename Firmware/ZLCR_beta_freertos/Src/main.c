@@ -74,7 +74,7 @@ osThreadId myTask02Handle;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 /* Const messages output by the command console. */
-static const char *const pcWelcomeMessage = "\r\nZLCR beta rev.c TIANLAN <yitiandelan@outlook.com> 2018-JUN-3\r\n";
+static const char *const pcWelcomeMessage = "\r\nZLCR beta rev.c TIANLAN <yitiandelan@outlook.com> 2018-OCT-21\r\n";
 static const char *const pcEndOfOutputMessage = "\r\n> ";
 static const char *const pcNewLine = "\r\n";
 static const char *const pcHelpMessage = 
@@ -85,8 +85,7 @@ option:\r\n\
   -f FREQ       Set test frequency (default: 1000.0)\r\n\
   -o FORMAT     Set output format (default: JSON); FORMAT is JSON:RAW:NULL\r\n\
   -h, --help    Print help message and exit\r\n\
-  -v, --version Print version and exit\r\n\
-";
+  -v, --version Print version and exit\r\n";
 
 static BaseType_t prvZLCRCommand(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString)
 {

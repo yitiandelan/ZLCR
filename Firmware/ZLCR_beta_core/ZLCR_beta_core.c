@@ -1,7 +1,7 @@
 /**
  * @file    ZLCR_beta_core.c
  * @author  TIANLAN <yitiandelan@outlook.com>
- * @date    2018-JUN-3
+ * @date    2018-OCT-21
  * @brief   
  *
  * Copyright (c) 2016-2018, TIANLAN.tech
@@ -23,33 +23,143 @@
 #include "ZLCR_beta_core.h"
 #include "arm_math.h"
 
-float ZLCR_prv_freq = 1000.0f;  //f = fs / 2^22 * freqREG
-unsigned int ZLCR_prv_tick1;    //freqREG
-unsigned int ZLCR_prv_sum1;     //phaseREG
+float           ZLCR_prv_buf        [4][512];
+float           ZLCR_prv_fbuf       [4][512];
+
+float           ZLCR_prv_freq;  //f = fs / 2^22 * freqREG
+unsigned int    ZLCR_prv_tick;  //freqREG
+unsigned int    ZLCR_prv_sum;   //phaseREG
+
+arm_biquad_casd_df1_inst_f32 \
+                ZLCR_prv_iir_inst   [8];
+float           ZLCR_prv_iir_state  [8][32];
+float           ZLCR_prv_iir_bufa   [4][512];
+float           ZLCR_prv_iir_bufb   [4][32];
+const float     ZLCR_prv_iir_coeffs [20];
+
+float           ZLCR_prv_fifo       [4][64];
+unsigned short  ZLCR_prv_fifo_wptr;
+
+unsigned short  *ZLCR_prv_dacbuf;
+unsigned short  *ZLCR_prv_adcbuf;
+unsigned short  ZLCR_prv_bufsize;
+
+const short     ZLCR_prv_coeffs_Q15[];
+const float     ZLCR_prv_coeffs_f32[];
 
 void ZLCR_Init(void)
 {
+    // initialization parameter
+    ZLCR_prv_freq = 1000.0f;
+    ZLCR_prv_bufsize = 0;
+    ZLCR_prv_fifo_wptr = 0;
+    // initialization filter
+    arm_biquad_cascade_df1_init_f32(&ZLCR_prv_iir_inst[0], 4, (float *)&ZLCR_prv_iir_coeffs, (float *)&ZLCR_prv_iir_state[0]);
+    arm_biquad_cascade_df1_init_f32(&ZLCR_prv_iir_inst[1], 4, (float *)&ZLCR_prv_iir_coeffs, (float *)&ZLCR_prv_iir_state[1]);
+    arm_biquad_cascade_df1_init_f32(&ZLCR_prv_iir_inst[2], 4, (float *)&ZLCR_prv_iir_coeffs, (float *)&ZLCR_prv_iir_state[2]);
+    arm_biquad_cascade_df1_init_f32(&ZLCR_prv_iir_inst[3], 4, (float *)&ZLCR_prv_iir_coeffs, (float *)&ZLCR_prv_iir_state[3]);
+    arm_biquad_cascade_df1_init_f32(&ZLCR_prv_iir_inst[4], 4, (float *)&ZLCR_prv_iir_coeffs, (float *)&ZLCR_prv_iir_state[4]);
+    arm_biquad_cascade_df1_init_f32(&ZLCR_prv_iir_inst[5], 4, (float *)&ZLCR_prv_iir_coeffs, (float *)&ZLCR_prv_iir_state[5]);
+    arm_biquad_cascade_df1_init_f32(&ZLCR_prv_iir_inst[6], 4, (float *)&ZLCR_prv_iir_coeffs, (float *)&ZLCR_prv_iir_state[6]);
+    arm_biquad_cascade_df1_init_f32(&ZLCR_prv_iir_inst[7], 4, (float *)&ZLCR_prv_iir_coeffs, (float *)&ZLCR_prv_iir_state[7]);
+    // initialization output freq
     ZLCR_Setfreq(&ZLCR_prv_freq);
 }
 
-void ZLCR_DeInit(void);
+void ZLCR_DeInit(void)
+{
+    // wait last processing
+}
 
 void ZLCR_IDLE(void)
 {
+    unsigned short phase0, phase1, t;
+    float *p[4] = {(float *)&ZLCR_prv_buf[0], (float *)&ZLCR_prv_buf[1], (float *)&ZLCR_prv_buf[2], (float *)&ZLCR_prv_buf[3]};
 
+    if ((ZLCR_prv_bufsize != 0) && (ZLCR_prv_bufsize <= 1024))
+    {
+        // processing data
+        for (t = 0; t < (ZLCR_prv_bufsize >> 1); t++)
+        {
+            phase0 = ZLCR_prv_sum >> 22; //10bit
+            phase1 = (phase0 + 768) & 0x3ff; //2^10=1024
+
+            *ZLCR_prv_dacbuf++ = 0;
+            *ZLCR_prv_dacbuf++ = ZLCR_prv_coeffs_Q15[phase0];
+
+            *p[0]++ = *ZLCR_prv_adcbuf++;
+            *p[1]++ = *ZLCR_prv_adcbuf++;
+            *p[2]++ = ZLCR_prv_coeffs_f32[phase0];
+            *p[3]++ = ZLCR_prv_coeffs_f32[phase1];
+
+            ZLCR_prv_sum += ZLCR_prv_tick;
+        }
+
+        // nonlinear processing
+        arm_mult_f32((float *)&ZLCR_prv_buf[0], (float *)&ZLCR_prv_buf[2], (float *)&ZLCR_prv_fbuf[0], t);
+        arm_mult_f32((float *)&ZLCR_prv_buf[0], (float *)&ZLCR_prv_buf[3], (float *)&ZLCR_prv_fbuf[1], t);
+        arm_mult_f32((float *)&ZLCR_prv_buf[1], (float *)&ZLCR_prv_buf[2], (float *)&ZLCR_prv_fbuf[2], t);
+        arm_mult_f32((float *)&ZLCR_prv_buf[1], (float *)&ZLCR_prv_buf[3], (float *)&ZLCR_prv_fbuf[3], t);
+
+        // filter a (HBF)
+        
+        // filter b (IIR)
+        arm_biquad_cascade_df1_f32(&ZLCR_prv_iir_inst[0], (float *)&ZLCR_prv_fbuf[0], (float *)&ZLCR_prv_iir_bufa[0], t);
+        arm_biquad_cascade_df1_f32(&ZLCR_prv_iir_inst[1], (float *)&ZLCR_prv_fbuf[1], (float *)&ZLCR_prv_iir_bufa[1], t);
+        arm_biquad_cascade_df1_f32(&ZLCR_prv_iir_inst[2], (float *)&ZLCR_prv_fbuf[2], (float *)&ZLCR_prv_iir_bufa[2], t);
+        arm_biquad_cascade_df1_f32(&ZLCR_prv_iir_inst[3], (float *)&ZLCR_prv_fbuf[3], (float *)&ZLCR_prv_iir_bufa[3], t);
+
+        // 16 times decimation
+        for (t = 1; t < (ZLCR_prv_bufsize >> 5); t++)
+        {
+            ZLCR_prv_iir_bufa[0][t] = ZLCR_prv_iir_bufa[0][t<<4];
+            ZLCR_prv_iir_bufa[1][t] = ZLCR_prv_iir_bufa[1][t<<4];
+            ZLCR_prv_iir_bufa[2][t] = ZLCR_prv_iir_bufa[2][t<<4];
+            ZLCR_prv_iir_bufa[3][t] = ZLCR_prv_iir_bufa[3][t<<4];
+        }
+
+        // filter c (IIR)
+        arm_biquad_cascade_df1_f32(&ZLCR_prv_iir_inst[4], (float *)&ZLCR_prv_iir_bufa[0], (float *)&ZLCR_prv_iir_bufb[0], t);
+        arm_biquad_cascade_df1_f32(&ZLCR_prv_iir_inst[5], (float *)&ZLCR_prv_iir_bufa[1], (float *)&ZLCR_prv_iir_bufb[1], t);
+        arm_biquad_cascade_df1_f32(&ZLCR_prv_iir_inst[6], (float *)&ZLCR_prv_iir_bufa[2], (float *)&ZLCR_prv_iir_bufb[2], t);
+        arm_biquad_cascade_df1_f32(&ZLCR_prv_iir_inst[7], (float *)&ZLCR_prv_iir_bufa[3], (float *)&ZLCR_prv_iir_bufb[3], t);
+
+        // 16 times decimation, wirte fifo
+        for (t = 0; t < (ZLCR_prv_bufsize >> 9); t++)
+        {
+            ZLCR_prv_fifo[0][ZLCR_prv_fifo_wptr] = ZLCR_prv_iir_bufb[0][t<<4] * +1.101640352185941e-10;
+            ZLCR_prv_fifo[1][ZLCR_prv_fifo_wptr] = ZLCR_prv_iir_bufb[1][t<<4] * +1.101640352185941e-10;
+            ZLCR_prv_fifo[2][ZLCR_prv_fifo_wptr] = ZLCR_prv_iir_bufb[2][t<<4] * -1.101640352185941e-10;
+            ZLCR_prv_fifo[3][ZLCR_prv_fifo_wptr] = ZLCR_prv_iir_bufb[3][t<<4] * -1.101640352185941e-10;
+
+            ZLCR_prv_fifo_wptr = (ZLCR_prv_fifo_wptr + 1) & 0x3f;
+        }
+
+        // complete
+        ZLCR_prv_bufsize = 0;
+    }
 }
 
 void ZLCR_ISR(unsigned short *txbuf, unsigned short *rxbuf, unsigned short offset, unsigned short size)
 {
-
+    if (ZLCR_prv_bufsize == 0)
+    {
+        ZLCR_prv_dacbuf = txbuf + offset;
+        ZLCR_prv_adcbuf = rxbuf + offset;
+        ZLCR_prv_bufsize = size;
+    }
+    else
+    {
+        for (;;);
+    }
 }
 
 void ZLCR_Setfreq(float *freq)
 {
     float f;
-    f =  (*freq > 90000.0f) ? 90000.0f : (*freq < 0.0f) ? 0.0f : *freq;
-    ZLCR_prv_tick1 = 22906.5f * f;
-    ZLCR_prv_freq = ZLCR_prv_tick1 / 22906.5f;
+    f = (*freq > 90000.0f) ? 90000.0f : (*freq < 0.0f) ? 0.0f : *freq;
+    ZLCR_prv_tick = 22906.5f * f;
+    ZLCR_prv_freq = ZLCR_prv_tick / 22906.5f;
 }
 
 void ZLCR_Getfreq(float *freq)
@@ -57,7 +167,14 @@ void ZLCR_Getfreq(float *freq)
     *freq = ZLCR_prv_freq;
 }
 
-const int16_t twiddleCoefQ15[] = {
+const float ZLCR_prv_iir_coeffs [20] = {
+  1.0f, -1.9822157452246196f, 1.0f, 1.9945972464232222, -0.99477864525879522,
+  1.0f, -1.9752977979523887f, 1.0f, 1.98497899263019, -0.98516003528928342,
+  1.0f, -1.9450917084336921f, 1.0f, 1.9776016079380723, -0.97778271344447154,
+  1.0f, -1.5943028297031059f, 1.0f, 1.9735891833580808, -0.97377044420984371
+};
+
+const short ZLCR_prv_coeffs_Q15[] = {
     0x0000, 0x0093, 0x0127, 0x01ba, 0x024d, 0x02e0, 0x0373, 0x0407, 0x049a, 0x052d, 0x05c0, 0x0653, 0x06e6, 0x0778, 0x080b, 0x089e,
     0x0930, 0x09c3, 0x0a55, 0x0ae8, 0x0b7a, 0x0c0c, 0x0c9e, 0x0d30, 0x0dc2, 0x0e53, 0x0ee5, 0x0f76, 0x1007, 0x1098, 0x1129, 0x11ba,
     0x124a, 0x12db, 0x136b, 0x13fb, 0x148a, 0x151a, 0x15a9, 0x1639, 0x16c8, 0x1756, 0x17e5, 0x1873, 0x1901, 0x198f, 0x1a1c, 0x1aaa,
@@ -124,7 +241,7 @@ const int16_t twiddleCoefQ15[] = {
     0xf6d0, 0xf762, 0xf7f5, 0xf888, 0xf91a, 0xf9ad, 0xfa40, 0xfad3, 0xfb66, 0xfbf9, 0xfc8d, 0xfd20, 0xfdb3, 0xfe46, 0xfed9, 0xff6d,
 };
 
-const float twiddleCoeff32[] = {
+const float ZLCR_prv_coeffs_f32[] = {
     +0.000000e+00, +6.759538e-13, +1.351882e-12, +2.027760e-12, +2.703561e-12, +3.379260e-12, +4.054832e-12, +4.730252e-12,
     +5.405493e-12, +6.080531e-12, +6.755340e-12, +7.429894e-12, +8.104169e-12, +8.778139e-12, +9.451778e-12, +1.012506e-11,
     +1.079796e-11, +1.147046e-11, +1.214252e-11, +1.281413e-11, +1.348525e-11, +1.415587e-11, +1.482595e-11, +1.549548e-11,
