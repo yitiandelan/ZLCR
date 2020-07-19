@@ -1,71 +1,46 @@
-# **ZLCR**
-## low cost 100k LCR meter, base on digital Lock-in amplifier
+## 概述
 
-频率范围：1Hz ~ 100kHz  ( 0.01Hz step );  
-阻抗范围：10m ~ 10M Ohm ( 1k ref only );  
-丢掉PSD和PGA，忘掉DFT、FFT和LMS算法吧，只需2个运放 + ADC/DAC，100k lcr meter带回家。核心算法类似soft define radio 中的数字下变频（数字IQ解调），更准确的定义是 DLIA（Digital Lock-in amplifier，数字锁定放大器）；其实就是将原来模拟器件完成的信号处理整个搬到了数字域，利用浮点运算能力 降低硬件复杂程度。相对于PSD方法，动态范围更高，当信号转换到数字域后，就无需再考虑噪声和失调，动态范围超过100dB；相对于FFT、LMS算法，16bit 4096point 已经算比较高了，而DLIA可以用浮点的 乘法器/CIC/FIR/IIR，DFT：Vi/Vq = 4095/0，DLIA： Vi/Vq = 4.0952341E3 / 1.234354E-2；此外 n=4096 fs=100khz 的FFT 分辨率≈24hz，而DLIA 不存在限制 举个栗子：80,000.00 Hz ~ 80,001.00 Hz扫频，分辨率0.01Hz；  
+基于低成本硬件和 DLIA 算法实现 LCR 表，主要特性是：
 
-自己绕的变压器：
+* 电路结构简单，低成本；
+* 激励信号幅度：0.25 Vrms；
+* 激励信号频率：[1e0, 1e5] Hz，步进：0.01 Hz;
+* 待测阻抗范围：[1e-3, 1e7] Ohm；
 
-![4mH.gif](docs/images/4mH.gif)
+核心类似 SDR 中的数字下变频（数字正交解调）算法，准确的定义是 DLIA（Digital Lock-in amplifier，数字锁定放大器）；利用数字信号处理算法代替部分硬件电路，降低硬件复杂程度。
 
-阻抗谱：  
+与主流方案的区别：
 
-![figure 1.png](docs/images/figure%201.png)
+* PSD 电路，测量范围更大，当信号转换到数字域后，就无需再考虑噪声和失调；
+* FFT、LMS算法，分辨率更高，调整滤波器带宽，可以得到更高信噪比；
 
-10nF 1kHz 1%建立时间：  
+测试截图：
 
-![10nF-1kHz.png](docs/images/10nF-1kHz.png)  
+* [测试某变压器](doc/res/app_csharp_4e-3h.gif)
+* [扫频测试](doc/res/app_python_scan_dut1.png)
+* [测试建立时间](doc/res/app_python_setup_1e-8f_1e3hz.png)
+* [更多图片](doc/res)
 
-[更多图片](https://github.com/yitiandelan/ZLCR/tree/master/docs/images)
+## 硬件相关
 
-## 硬件相关：
+板载调试器为 J-Link OB-STM32F072-CortexM / CMSIS-DAP 兼容设计，DFU 自举；
 
-标准（100k）：  
-4 x OPA + 2 x ADC + 1 x DAC + MCU (> 80 DMIPS);  
-最低（20k）：  
-2 x OPA + USB Audio Codec (such as PCM2904);  
-开发版（100k）：  
-主控制器：STM32F411CE ( > 80 DMIPS), CNY 24  
-ADC/DAC：TLV320AIC3204 (TI audio codec), CNY 10  
-AFE：AD8065, 4 x CNY 4  
-DEBUGGER：CMSIS-DAP for STM32F072 with CDC / J-Link OB-STM32F072-CortexM, CNY 20  
-接口：USB VCP (via DEBUGGER) or 蓝牙串口 (Simple Shell, Data format: JSON)  
-Hardware：[100k ZLCR.rev.c.pdf](https://github.com/yitiandelan/ZLCR/blob/master/Hardware/100k%20ZLCR.rev.c.PDF)  
-Software：[Firmware for stm32f4xx](https://github.com/yitiandelan/ZLCR/tree/master/Firmware)
+## 软件相关
 
-## 软件相关：
+## 扩展部分
 
-[Python](https://github.com/yitiandelan/ZLCR/tree/master/pyLCR) / [C#](https://github.com/yitiandelan/ZLCR/tree/master/ZLCR) / Matlab / Windows UWP
+运放构成的自平衡电桥不适合工作在 100 kHz 以上频率，设计了数字平衡电桥结构，由两个 DDS 产生激励，检测不平衡电压/电流，控制激励信号幅度/相位，使桥路趋近平衡（减小误差）；同时采样 V(DUT) & I(DUT)，计算复阻抗；通过欠采样解决 ADC 采样率不够和计算量增大的问题，解决方案是欠采样（中频采样），设计了简单的采样保持器 (暂未验证)；设计通过 PWM（AF OD 模式）调整 I(FSADJSET) AD9834 输出幅度，通过抖动实现 16 bit 相位控制；
 
-### 通信格式：
+最后，发个还未验证的版本：[ZLCR Plus Sch](hardware/zlcr_plus_sch_rev.a.pdf)
 
-```JSON
-uart tx:
-  zlcr -raw -f 1000\n
-uart rx:
-  {"FREQ":1.000000e+03,"a":-2.304493e+03,"b":-5.388904e+03,"c":-2.319749e+03,"d":-5.420242e+03}\n
-  {"FREQ":1.000000e+03,"a":-2.304510e+03,"b":-5.388904e+03,"c":-2.319749e+03,"d":-5.419875e+03}\n
-  {"FREQ":1.000000e+03,"a":-2.304507e+03,"b":-5.388909e+03,"c":-2.319749e+03,"d":-5.421182e+03}\n
-  {"FREQ":1.000000e+03,"a":-2.304502e+03,"b":-5.388918e+03,"c":-2.319749e+03,"d":-5.423528e+03}\n
-uart tx:
-  zlcr -f 1000\n
-uart rx:
-  {"FREQ":1.000000e+03,"MAG":9.937274e-01,"PHASE":-1.291339e-04}\n
-  {"FREQ":1.000000e+03,"MAG":9.940118e-01,"PHASE":-2.515127e-04}\n
-  {"FREQ":1.000000e+03,"MAG":9.941343e-01,"PHASE":-3.042429e-04}\n
-  {"FREQ":1.000000e+03,"MAG":9.939352e-01,"PHASE":-2.185376e-04}\n
-```
+## 参考
 
-## 扩展（up to 20M）：
+[Keysight Technologies Impedance Measurement Handbook](http://literature.cdn.keysight.com/litweb/pdf/5950-3000.pdf)
 
-运放构成的auto-balancing bridge并不适合100k以上的测试频率，所以设计了数字桥路平衡控制系统，产生两个激励信号(2 x AD9834)，通过检测不平衡电压/电流(HPF + 40dB AMP + DLIA)，由控制算法调整激励信号幅度和相位，使桥路趋近平衡；同时利用ADC + DLIA 检测V(DUT) & I(DUT)，计算复阻抗，测量结果在桥路达到平衡后误差最小；ADC采样率和计算量增大的问题，解决方案是欠采样（中频采样）。大学时候做过STM32F4欠采样第20奈奎斯特区 观察到明显的孔径抖动 SNR会降低，再往上bandwidth就不够了。对于V(DUT) I(DUT)这种窄带信号，欠采样 + PSD/DLIA 是性能和成本的平衡；对于ΣΔADC，设计了简单的采样保持器 ( 4 x TS5A3159A 未验证)；此外AD9834不能控制幅度，设计通过PWM（AF OD mode）调整 I(FSADJSET) 进行幅度控制，相位利用抖动实现16bit；  
-最后，发个还未验证的版本 [20M ZLCR.rev.a.pdf](https://github.com/yitiandelan/ZLCR/blob/master/Hardware/20M%20ZLCR.rev.a.PDF)  
+[抛砖引玉 基于DSP的LCR表试制 供大家参考](http://www.amobbs.com/thread-5590156-1-1.html)
 
-## ref:
+[MT-002: 奈奎斯特准则对数据采样系统设计有何意义](http://www.analog.com/media/cn/training-seminars/tutorials/MT-002_cn.pdf)
 
-[Keysight Technologies Impedance Measurement Handbook](http://literature.cdn.keysight.com/litweb/pdf/5950-3000.pdf)  
-[抛砖引玉 基于DSP的LCR表试制 供大家参考](http://www.amobbs.com/thread-5590156-1-1.html)  
-[MT-002: 奈奎斯特准则对数据采样系统设计有何意义](http://www.analog.com/media/cn/training-seminars/tutorials/MT-002_cn.pdf)  
-[MS-2698：使用同步检测进行精密低电平测量](http://www.analog.com/media/cn/technical-documentation/technical-articles/Use-Synchronous-Detection-to-Make-Precision-Low-Level-Measurements-MS-2698_cn.pdf)  
+[MS-2698：使用同步检测进行精密低电平测量](http://www.analog.com/media/cn/technical-documentation/technical-articles/Use-Synchronous-Detection-to-Make-Precision-Low-Level-Measurements-MS-2698_cn.pdf)
+
 [基于DLIA的交流阻抗谱测量系统关键技术研究](http://cdmd.cnki.com.cn/Article/CDMD-10487-1012361681.htm)

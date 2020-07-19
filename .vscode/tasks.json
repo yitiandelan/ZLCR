@@ -1,0 +1,100 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Test",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "clean",
+                "build",
+                "flash"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "panel": "shared",
+                "reveal": "silent"
+            }
+        },
+        {
+            "label": "Run Build",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "clean",
+                "build"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "panel": "shared",
+                "reveal": "silent"
+            }
+        },
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "make",
+            "args": [],
+            "options": {
+                "cwd": "${workspaceRoot}/firmware"
+            },
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": [
+                    "relative",
+                    "${workspaceRoot}/firmware"
+                ]
+            }
+        },
+        {
+            "label": "flash",
+            "type": "shell",
+            "command": "openocd",
+            "args": [
+                "-f",
+                "interface/jlink.cfg",
+                "-c",
+                "'transport select swd'",
+                "-f",
+                "target/stm32f4x.cfg",
+                "-c",
+                "'program build/zlcr_beta.elf reset exit'"
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}/firmware"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "clean",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "clean"
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}/firmware"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "openocd",
+            "type": "shell",
+            "command": "openocd",
+            "args": [
+                "-f",
+                "interface/jlink.cfg",
+                "-c",
+                "'transport select swd'",
+                "-f",
+                "target/stm32f4x.cfg"
+            ],
+            "isBackground": true,
+            "problemMatcher": []
+        }
+    ]
+}
