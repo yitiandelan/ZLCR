@@ -70,6 +70,7 @@ CFLAGS += -T ./rtos/gcc/stm32f411ce_flash.lds
 LIBS = -lm -lc -lnosys
 
 vpath %.c  ./core
+vpath %.c  ./target
 vpath %.c  ./rtos/src
 vpath %.c  $(STM_COMMON)/stm32f4/Src
 vpath %.c  $(STM_COMMON)/cmsis/CMSIS/DSP_Lib/Source/FilteringFunctions
@@ -81,6 +82,7 @@ vpath %.c  $(STM_COMMON)/freertos/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI
 
 # Includes
 CFLAGS += -I ./core
+CFLAGS += -I ./target
 CFLAGS += -I ./rtos/inc
 CFLAGS += -I $(STM_COMMON)/stm32f4/Inc
 CFLAGS += -I $(STM_COMMON)/cmsis/CMSIS/Include

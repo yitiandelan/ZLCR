@@ -1,7 +1,7 @@
 {
     "configurations": [
         {
-            "name": "Win32",
+            "name": "Linux",
             "browse": {
                 "path": [
                     "${workspaceFolder}"
@@ -9,15 +9,16 @@
                 "limitSymbolsToIncludedHeaders": true
             },
             "includePath": [
-                "${workspaceFolder}/**",
-                "${workspaceFolder}/../sw_Lib/CMSIS/Include",
-                "${workspaceFolder}/../sw_Lib/CMSIS/Device/ST/STM32F4xx/Include",
-                "${workspaceFolder}/../sw_Lib/STM32F4xx_HAL_Driver/Inc",
-                "${workspaceFolder}/../sw_Lib/STM32F4xx_HAL_Driver/Inc/Legacy",
-                "${workspaceFolder}/../sw_Lib/Middlewares/Third_Party/FreeRTOS/Source",
-                "${workspaceFolder}/../sw_Lib/Middlewares/Third_Party/FreeRTOS/Source/include",
-                "${workspaceFolder}/../sw_Lib/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS",
-                "${workspaceFolder}/../sw_Lib/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F"
+                "${workspaceFolder}/firmware/core",
+                "${workspaceFolder}/firmware/target",
+                "${workspaceFolder}/firmware/rtos/inc",
+                "${workspaceFolder}/firmware/lib/cmsis/CMSIS/Include",
+                "${workspaceFolder}/firmware/lib/stm32f4/Inc",
+                "${workspaceFolder}/firmware/lib/stm32f4/Inc/Legacy",
+                "${workspaceFolder}/firmware/lib/freertos/FreeRTOS/Source",
+                "${workspaceFolder}/firmware/lib/freertos/FreeRTOS/Source/include",
+                "${workspaceFolder}/firmware/lib/freertos/FreeRTOS/Source/portable/GCC/ARM_CM4F",
+                "${workspaceFolder}/firmware/lib/freertos/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI"
             ],
             "defines": [
                 "USE_HAL_DRIVER",

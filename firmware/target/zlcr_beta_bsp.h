@@ -1,10 +1,10 @@
 /**
- * @file    BSP.h
- * @author  yitiandelan
- * @date    2017-02-25
+ * @file    zlcr_beta_bsp.h
+ * @author  TIANLAN <yitiandelan@outlook.com>
+ * @date    2020-07-20
  * @brief   
  *
- * Copyright (c) 2016-2017, yitiandlan, All Rights Reserved
+ * Copyright (c) 2016-2020, TIANLAN.tech
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -19,20 +19,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef _ZLCR_BETA_BSP_H
+#define _ZLCR_BETA_BSP_H
 
-#include "stm32f4xx_hal.h"
+#define I2C_ADDRESS (0x18 << 1)
+#define ZLCR_BSP_Delay(t) osDelay(t)
 
-#define I2C_ADDRESS  (0x18<<1)
+void ZLCR_BSP_Init(void);
+void ZLCR_BSP_UART_PutString(const char *pcString, unsigned short usStringLength);
+void ZLCR_BSP_UART_PutChar(signed char cOutChar);
+unsigned int ZLCR_BSP_UART_GetChar(signed char *pcRxedChar);
+void ZLCR_BSP_I2C_Write(char REG_Address, char REG_data);
 
-extern int16_t I2S_ADCBuf[];
-extern int16_t I2S_DACBuf[];
-extern float freq;
-extern float ADCGAIN[];
-
-void BSP_CODEC_Init(void);
-void BSP_CODEC_Start(void);
-void BSP_Setfreq(float f);
-void BSP_SetGAIN(float GAIN1, float GAIN2);
-void Single_WriteI2C(uint8_t REG_Address,uint8_t REG_data);
-uint8_t Single_ReadI2C(uint8_t REG_Address);
-
+#endif
