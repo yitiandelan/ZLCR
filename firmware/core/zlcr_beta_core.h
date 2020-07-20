@@ -1,7 +1,7 @@
 /**
  * @file    zlcr_core.h
  * @author  TIANLAN <yitiandelan@outlook.com>
- * @date    2020-07-20
+ * @date    2020-07-21
  * @brief   
  *
  * Copyright (c) 2016-2020, TIANLAN.tech
@@ -27,7 +27,10 @@ void ZLCR_DeInit(void);
 void ZLCR_IDLE(void);
 void ZLCR_ISR(unsigned short *txbuf, unsigned short *rxbuf, unsigned short offset, unsigned short size);
 
-void ZLCR_Setfreq(float *freq);
-void ZLCR_Getfreq(float *freq);
+void ZLCR_SetFreq(float *freq);
+void ZLCR_GetFreq(float *freq);
+
+unsigned int ZLCR_SetData(float *data);
+unsigned int ZLCR_GetData(float *data);
 
 #endif

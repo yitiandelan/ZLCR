@@ -27,6 +27,7 @@ SRCS += arm_biquad_cascade_df1_init_f32.c
 SRCS += arm_biquad_cascade_df1_f32.c
 SRCS += arm_fir_init_f32.c
 SRCS += arm_fir_f32.c
+SRCS += arm_copy_f32.c
 
 # Library code
 SRCS += stm32f4xx_hal.c
@@ -75,6 +76,7 @@ vpath %.c  ./rtos/src
 vpath %.c  $(STM_COMMON)/stm32f4/Src
 vpath %.c  $(STM_COMMON)/cmsis/CMSIS/DSP_Lib/Source/FilteringFunctions
 vpath %.c  $(STM_COMMON)/cmsis/CMSIS/DSP_Lib/Source/BasicMathFunctions
+vpath %.c  $(STM_COMMON)/cmsis/CMSIS/DSP_Lib/Source/SupportFunctions
 vpath %.c  $(STM_COMMON)/freertos/FreeRTOS/Source
 vpath %.c  $(STM_COMMON)/freertos/FreeRTOS/Source/portable/MemMang
 vpath %.c  $(STM_COMMON)/freertos/FreeRTOS/Source/portable/GCC/ARM_CM4F

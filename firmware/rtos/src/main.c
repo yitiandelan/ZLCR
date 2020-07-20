@@ -50,6 +50,7 @@
 #include "zlcr_beta_core.h"
 #include "FreeRTOS_CLI.h"
 #include "string.h"
+#include "arm_math.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -74,7 +75,7 @@ osThreadId myTask02Handle;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 /* Const messages output by the command console. */
-static const char *const pcWelcomeMessage = "\r\nZLCR beta rev.c TIANLAN <yitiandelan@outlook.com> 2020-07-20\r\n";
+static const char *const pcWelcomeMessage = "\r\nZLCR beta rev.c TIANLAN <yitiandelan@outlook.com> 2020-07-21\r\n";
 static const char *const pcEndOfOutputMessage = "\r\n> ";
 static const char *const pcNewLine = "\r\n";
 static const char *const pcHelpMessage =
@@ -95,7 +96,7 @@ static BaseType_t prvZLCRCommand(char *pcWriteBuffer, size_t xWriteBufferLen, co
     BaseType_t xReturn = pdPASS;
     static size_t temp = 0;
     static char mode = 0;
-    float f;
+    float f, ans[4];
     signed char cRxedChar;
 
     pcWriteBuffer[0] = 0x00;
@@ -133,7 +134,7 @@ static BaseType_t prvZLCRCommand(char *pcWriteBuffer, size_t xWriteBufferLen, co
             {
                 if (sscanf(pcParameter, "-f %f", &f))
                 {
-                    ZLCR_Setfreq(&f);
+                    ZLCR_SetFreq(&f);
                     uxParameterNumber += 2;
                 }
                 else
@@ -164,16 +165,29 @@ static BaseType_t prvZLCRCommand(char *pcWriteBuffer, size_t xWriteBufferLen, co
         }
         else
         {
-            ZLCR_Getfreq(&f);
-            osDelay(100);
+            ZLCR_GetFreq(&f);
 
-            if (mode == 0)
+            if (ZLCR_GetData(&ans[0]))
             {
-                snprintf(pcWriteBuffer, xWriteBufferLen, "{\"FREQ\":%e,\"MAG\":%e,\"PHASE\":%e}\r\n", f, 0.1234, 0.5678);
+                osDelay(5);
+            }
+            else if (mode == 0)
+            {
+                float t[4];
+
+                t[0] = (ans[0] * ans[2] + ans[1] * ans[3]) / (ans[2] * ans[2] + ans[3] * ans[3]);
+                t[1] = (ans[1] * ans[2] - ans[0] * ans[3]) / (ans[2] * ans[2] + ans[3] * ans[3]);
+
+                t[0] = (t[0] <= 0) ? 1e-7 : t[0];
+
+                t[2] = sqrtf(t[0] * t[0] + t[1] * t[1]);
+                t[3] = atanf(-1.f * t[1] / t[0]);
+
+                snprintf(pcWriteBuffer, xWriteBufferLen, "{\"FREQ\":%e,\"MAG\":%e,\"PHASE\":%e}\r\n", f, t[2], t[3]);
             }
             else if (mode == 1)
             {
-                snprintf(pcWriteBuffer, xWriteBufferLen, "{\"FREQ\":%e,\"a\":%e,\"b\":%e,\"c\":%e,\"d\":%e}\r\n", f, 0.1234, 0.5678, 0.4321, 0.8765);
+                snprintf(pcWriteBuffer, xWriteBufferLen, "{\"FREQ\":%e,\"a\":%e,\"b\":%e,\"c\":%e,\"d\":%e}\r\n", f, ans[0], ans[1], ans[2], ans[3]);
             }
             else if (mode == 2)
             {
