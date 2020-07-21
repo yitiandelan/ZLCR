@@ -52,7 +52,7 @@ SRCS += stm32f4xx_hal_dma_ex.c
 SRCS += stm32f4xx_hal_i2s.c
 
 # add startup file to build
-SRCS += ./rtos/gcc/startup_stm32f411xe.c
+SRCS += ./rtos/gcc/startup_stm32f411xe.s
 
 # Project name
 PROJ_NAME = zlcr_beta
@@ -66,7 +66,7 @@ CFLAGS  = -g -O3 -Wall
 CFLAGS += -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
 CFLAGS += -u_printf_float -u_scanf_float
 CFLAGS += -D USE_HAL_DRIVER -D STM32F411xE -D ARM_MATH_CM4 -D __FPU_PRESENT=1U
-CFLAGS += -T ./rtos/gcc/stm32f411ce_flash.lds
+CFLAGS += -T ./rtos/gcc/STM32F411CEUx_FLASH.ld
 
 LIBS = -lm -lc -lnosys
 
