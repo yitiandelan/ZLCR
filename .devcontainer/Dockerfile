@@ -12,4 +12,6 @@ RUN pacman -Sy --noconfirm \
     arm-none-eabi-newlib \
     git \
     git-lfs \
-    make
+    make \
+    ninja \
+    gn
