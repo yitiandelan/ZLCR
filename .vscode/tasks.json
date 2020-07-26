@@ -5,7 +5,7 @@
             "label": "Run Test",
             "dependsOrder": "sequence",
             "dependsOn": [
-                "clean",
+                "gen",
                 "build",
                 "flash"
             ],
@@ -22,7 +22,7 @@
             "label": "Run Build",
             "dependsOrder": "sequence",
             "dependsOn": [
-                "clean",
+                "gen",
                 "build"
             ],
             "group": {
@@ -37,18 +37,15 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "make",
-            "args": [],
+            "command": "ninja",
+            "args": [
+                "-C",
+                "build"
+            ],
             "options": {
-                "cwd": "${workspaceRoot}/firmware"
+                "cwd": "${workspaceRoot}"
             },
-            "problemMatcher": {
-                "base": "$gcc",
-                "fileLocation": [
-                    "relative",
-                    "${workspaceRoot}/firmware"
-                ]
-            }
+            "problemMatcher": []
         },
         {
             "label": "flash",
@@ -65,19 +62,33 @@
                 "'program build/zlcr_beta.elf reset exit'"
             ],
             "options": {
-                "cwd": "${workspaceRoot}/firmware"
+                "cwd": "${workspaceRoot}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "gen",
+            "type": "shell",
+            "command": "gn",
+            "args": [
+                "gen",
+                "build"
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}"
             },
             "problemMatcher": []
         },
         {
             "label": "clean",
             "type": "shell",
-            "command": "make",
+            "command": "gn",
             "args": [
-                "clean"
+                "clean",
+                "build"
             ],
             "options": {
-                "cwd": "${workspaceRoot}/firmware"
+                "cwd": "${workspaceRoot}"
             },
             "problemMatcher": []
         },
