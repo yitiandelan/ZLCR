@@ -1,0 +1,3 @@
+group("firmware") {
+    deps = [ "firmware:zlcr_beta" ]
+}
