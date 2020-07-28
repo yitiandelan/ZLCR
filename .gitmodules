@@ -1,9 +1,12 @@
 [submodule "firmware/lib/cmsis"]
 	path = firmware/lib/cmsis
-	url = https://github.com/ARM-software/CMSIS.git
+	url = https://github.com/ARM-software/CMSIS_5.git
 [submodule "firmware/lib/freertos"]
 	path = firmware/lib/freertos
 	url = https://github.com/FreeRTOS/FreeRTOS.git
 [submodule "firmware/lib/stm32f4"]
 	path = firmware/lib/stm32f4
-	url = https://github.com/yitiandelan/STM32F4xx_HAL_Driver.git
+	url = https://github.com/STMicroelectronics/stm32f4xx_hal_driver.git
+[submodule "firmware/lib/cmsis_device_f4"]
+	path = firmware/lib/cmsis_device_f4
+	url = https://github.com/STMicroelectronics/cmsis_device_f4.git

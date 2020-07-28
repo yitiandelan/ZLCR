@@ -129,6 +129,10 @@ void ZLCR_BSP_Init(void)
     /* TLV320AIC3204 start */
     HAL_I2SEx_TransmitReceive_DMA(&hi2s3, (unsigned short *)&I2S_DACBuf, (unsigned short *)&I2S_ADCBuf, 2048);
 
+    // Try RegisterCallback but HAL_I2SEx_TransmitReceive_DMA rewritten it, next releases fix
+    hi2s3.hdmatx->XferCpltCallback = HAL_I2S_TxCpltCallback;
+    hi2s3.hdmatx->XferHalfCpltCallback = HAL_I2S_TxHalfCpltCallback;
+
     /* uart start */
     HAL_UART_Receive_DMA(&huart1, (unsigned char *)uart1_rxbuf, 64);
     HAL_UART_Transmit_DMA(&huart1, (unsigned char *)uart1_rxbuf, 0);
