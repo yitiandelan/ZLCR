@@ -6,7 +6,6 @@ executable("zlcr_beta") {
     include_dirs = [
         # include
         "core",
-        "target",
         "rtos/inc",
         "lib/stm32f4/Inc",
         "lib/stm32f4/Inc/Legacy",
@@ -21,15 +20,16 @@ executable("zlcr_beta") {
         "rtos/gcc/startup_stm32f411xe.s",
         # zlcr src
         "core/zlcr_beta_core.c",
-        "target/zlcr_beta_bsp.c",
+        "rtos/src/zlcr_beta_bsp.c",
         # main
         "rtos/src/main.c",
-        "rtos/src/cmsis_os.c",
-        "rtos/src/freertos.c",
         "rtos/src/stm32f4xx_hal_msp.c",
+        "rtos/src/stm32f4xx_hal_timebase_tim.c",
         "rtos/src/stm32f4xx_it.c",
         "rtos/src/system_stm32f4xx.c",
         # rtos src
+        "rtos/src/cmsis_os.c",
+        "rtos/src/freertos.c",
         "lib/freertos/FreeRTOS/Source/event_groups.c",
         "lib/freertos/FreeRTOS/Source/timers.c",
         "lib/freertos/FreeRTOS/Source/tasks.c",

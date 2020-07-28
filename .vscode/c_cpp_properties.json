@@ -10,7 +10,6 @@
             },
             "includePath": [
                 "${workspaceFolder}/firmware/core",
-                "${workspaceFolder}/firmware/target",
                 "${workspaceFolder}/firmware/rtos/inc",
                 "${workspaceFolder}/firmware/lib/cmsis/CMSIS/DSP/Include",
                 "${workspaceFolder}/firmware/lib/cmsis/CMSIS/Core/Include",

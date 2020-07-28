@@ -129,7 +129,7 @@ void ZLCR_BSP_Init(void)
     /* TLV320AIC3204 start */
     HAL_I2SEx_TransmitReceive_DMA(&hi2s3, (unsigned short *)&I2S_DACBuf, (unsigned short *)&I2S_ADCBuf, 2048);
 
-    // It's a problem, stm32 f4 hal v1.7.0 callback api is remove
+    // Try RegisterCallback but HAL_I2SEx_TransmitReceive_DMA rewritten it, next releases fix
     hi2s3.hdmatx->XferCpltCallback = HAL_I2S_TxCpltCallback;
     hi2s3.hdmatx->XferHalfCpltCallback = HAL_I2S_TxHalfCpltCallback;
 
