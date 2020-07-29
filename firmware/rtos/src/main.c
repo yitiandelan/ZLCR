@@ -66,7 +66,7 @@ osThreadId myTask02Handle;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 /* Const messages output by the command console. */
-static const char *const pcWelcomeMessage = "\r\nZLCR beta rev.c TIANLAN <yitiandelan@outlook.com> 2020-07-21\r\n";
+static const char *const pcWelcomeMessage = "\r\n";
 static const char *const pcEndOfOutputMessage = "\r\n> ";
 static const char *const pcNewLine = "\r\n";
 static const char *const pcHelpMessage =
@@ -78,6 +78,7 @@ option:\r\n\
   -o FORMAT     Set output format (default: JSON); FORMAT is JSON:RAW:NULL\r\n\
   -h, --help    Print help message and exit\r\n\
   -v, --version Print version and exit\r\n";
+static const char *const pcVersionMessage = "{\"HW\": \"ZLCR BETA REV.C\", \"FW\": \"v0.1.1\", \"API\": 2}\r\n";
 
 static BaseType_t prvZLCRCommand(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString)
 {
@@ -118,7 +119,7 @@ static BaseType_t prvZLCRCommand(char *pcWriteBuffer, size_t xWriteBufferLen, co
             }
             else if (!strncmp(pcParameter, "-v", 2) || !strncmp(pcParameter, "--version", 9))
             {
-                strcpy(pcWriteBuffer, pcWelcomeMessage);
+                strcpy(pcWriteBuffer, pcVersionMessage);
                 xReturn = pdFALSE;
             }
             else if (!strncmp(pcParameter, "-f", 2))
