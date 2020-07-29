@@ -1,7 +1,7 @@
 /**
  * @file    zlcr_beta_bsp.c
  * @author  TIANLAN <yitiandelan@outlook.com>
- * @date    2020-07-21
+ * @date    2020-07-29
  * @brief   
  *
  * Copyright (c) 2016-2020, TIANLAN.tech
@@ -22,19 +22,18 @@
 
 #include "stm32f4xx_hal.h"
 #include "cmsis_os.h"
+#include "zlcr_core.h"
 #include "zlcr_beta_bsp.h"
 
 extern I2C_HandleTypeDef hi2c1;
 extern I2S_HandleTypeDef hi2s3;
 extern UART_HandleTypeDef huart1;
 
-char uart1_rxbuf[64];
-unsigned short I2S_ADCBuf[2048];
-unsigned short I2S_DACBuf[2048];
+char ZLCR_Beta_REPL_RxBuf[64];
+unsigned short ZLCR_Beta_ADCbuf[2048];
+unsigned short ZLCR_Beta_DACBuf[2048];
 
-extern void ZLCR_ISR(unsigned short *txbuf, unsigned short *rxbuf, unsigned short offset, unsigned short size);
-
-const char ZLCR_BSP_CODEC_REG[][2] = {
+const char ZLCR_Beta_BSP_CODEC_REG[][2] = {
     /* DAC Step */
     {0x00, 0x00}, // Select Page 0
     {0x0b, 0x81}, // NDAC = 1, Power up
@@ -102,59 +101,59 @@ const char ZLCR_BSP_CODEC_REG[][2] = {
     {0x54, 0x00}, // Right ADC Digital gain
 };
 
-void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
+void ZLCR_Beta_BSP_TxHalfCpltCallback(DMA_HandleTypeDef *hdma)
 {
-    ZLCR_ISR((unsigned short *)&I2S_DACBuf, (unsigned short *)&I2S_ADCBuf, 0, 1024);
+    ZLCR_Core_ISR((unsigned short *)&ZLCR_Beta_DACBuf, (unsigned short *)&ZLCR_Beta_ADCbuf, 0, 1024);
 }
 
-void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
+void ZLCR_Beta_BSP_TxCpltCallback(DMA_HandleTypeDef *hdma)
 {
-    ZLCR_ISR((unsigned short *)&I2S_DACBuf, (unsigned short *)&I2S_ADCBuf, 1024, 1024);
+    ZLCR_Core_ISR((unsigned short *)&ZLCR_Beta_DACBuf, (unsigned short *)&ZLCR_Beta_ADCbuf, 1024, 1024);
 }
 
-void ZLCR_BSP_Init(void)
+void ZLCR_Beta_BSP_Init(void)
 {
-    unsigned short size = sizeof(ZLCR_BSP_CODEC_REG) / sizeof(ZLCR_BSP_CODEC_REG[0][0]) / 2;
+    unsigned short size = sizeof(ZLCR_Beta_BSP_CODEC_REG) / sizeof(ZLCR_Beta_BSP_CODEC_REG[0][0]) / 2;
 
     /* TLV320AIC3204 reset */
-    ZLCR_BSP_I2C_Write(0x00, 0x00);
-    ZLCR_BSP_I2C_Write(0x01, 0x01);
+    ZLCR_Beta_BSP_I2C_Write(0x00, 0x00);
+    ZLCR_Beta_BSP_I2C_Write(0x01, 0x01);
 
-    ZLCR_BSP_Delay(5);
+    ZLCR_Beta_BSP_Delay(5);
 
     /* TLV320AIC3204 init */
     for (unsigned short i = 0; i < size; i++)
-        ZLCR_BSP_I2C_Write(ZLCR_BSP_CODEC_REG[i][0], ZLCR_BSP_CODEC_REG[i][1]);
+        ZLCR_Beta_BSP_I2C_Write(ZLCR_Beta_BSP_CODEC_REG[i][0], ZLCR_Beta_BSP_CODEC_REG[i][1]);
 
     /* TLV320AIC3204 start */
-    HAL_I2SEx_TransmitReceive_DMA(&hi2s3, (unsigned short *)&I2S_DACBuf, (unsigned short *)&I2S_ADCBuf, 2048);
+    HAL_I2SEx_TransmitReceive_DMA(&hi2s3, (unsigned short *)&ZLCR_Beta_DACBuf, (unsigned short *)&ZLCR_Beta_ADCbuf, 2048);
 
     // Try RegisterCallback but HAL_I2SEx_TransmitReceive_DMA rewritten it, next releases fix
-    hi2s3.hdmatx->XferCpltCallback = HAL_I2S_TxCpltCallback;
-    hi2s3.hdmatx->XferHalfCpltCallback = HAL_I2S_TxHalfCpltCallback;
+    hi2s3.hdmatx->XferCpltCallback = ZLCR_Beta_BSP_TxCpltCallback;
+    hi2s3.hdmatx->XferHalfCpltCallback = ZLCR_Beta_BSP_TxHalfCpltCallback;
 
     /* uart start */
-    HAL_UART_Receive_DMA(&huart1, (unsigned char *)uart1_rxbuf, 64);
-    HAL_UART_Transmit_DMA(&huart1, (unsigned char *)uart1_rxbuf, 0);
+    HAL_UART_Receive_DMA(&huart1, (unsigned char *)ZLCR_Beta_REPL_RxBuf, 64);
+    HAL_UART_Transmit_DMA(&huart1, (unsigned char *)ZLCR_Beta_REPL_RxBuf, 0);
 }
 
-void ZLCR_BSP_UART_PutString(const char *pcString, unsigned short usStringLength)
+void ZLCR_Beta_BSP_REPL_PutString(const char *pcString, unsigned short usStringLength)
 {
     HAL_DMA_Abort(huart1.hdmatx);
     huart1.gState = HAL_UART_STATE_READY;
     HAL_UART_Transmit_DMA(&huart1, (unsigned char *)pcString, usStringLength);
     for (; huart1.hdmatx->Instance->NDTR;)
     {
-        ZLCR_BSP_Delay(1);
+        ZLCR_Beta_BSP_Delay(1);
     }
 }
 
-void ZLCR_BSP_UART_PutChar(signed char cOutChar)
+void ZLCR_Beta_BSP_REPL_PutChar(signed char cOutChar)
 {
     huart1.Instance->DR = cOutChar;
 }
 
-unsigned int ZLCR_BSP_UART_GetChar(signed char *pcRxedChar)
+unsigned int ZLCR_Beta_BSP_REPL_GetChar(signed char *pcRxedChar)
 {
     static unsigned int uart1cnt = 64;
 
@@ -168,7 +167,7 @@ unsigned int ZLCR_BSP_UART_GetChar(signed char *pcRxedChar)
     return 0;
 }
 
-void ZLCR_BSP_I2C_Write(char REG_Address, char REG_data)
+void ZLCR_Beta_BSP_I2C_Write(char REG_Address, char REG_data)
 {
     char txData[2] = {REG_Address, REG_data};
     while (HAL_I2C_Master_Transmit(&hi2c1, I2C_ADDRESS, (unsigned char *)&txData, 2, 100) != HAL_OK)

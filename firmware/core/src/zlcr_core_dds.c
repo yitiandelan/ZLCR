@@ -1,7 +1,7 @@
 /**
- * @file    zlcr_core.h
+ * @file    zlcr_core_dds.c
  * @author  TIANLAN <yitiandelan@outlook.com>
- * @date    2020-07-21
+ * @date    2020-07-29
  * @brief   
  *
  * Copyright (c) 2016-2020, TIANLAN.tech
@@ -19,18 +19,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef _ZLCR_CORE_H
-#define _ZLCR_CORE_H
-
-void ZLCR_Init(void);
-void ZLCR_DeInit(void);
-void ZLCR_IDLE(void);
-void ZLCR_ISR(unsigned short *txbuf, unsigned short *rxbuf, unsigned short offset, unsigned short size);
-
-void ZLCR_SetFreq(float *freq);
-void ZLCR_GetFreq(float *freq);
-
-unsigned int ZLCR_SetData(float *data);
-unsigned int ZLCR_GetData(float *data);
-
-#endif

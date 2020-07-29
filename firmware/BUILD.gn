@@ -1,71 +1,173 @@
-executable("zlcr_beta") {
-    defines = [ "USE_HAL_DRIVER", "STM32F411xE", "ARM_MATH_CM4", "__FPU_PRESENT=1U" ]
-    cflags = [ "-g", "-O3", "-Wall" ]
-    cflags += [ "-mthumb", "-mcpu=cortex-m4", "-mfloat-abi=hard", "-mfpu=fpv4-sp-d16", "-u_printf_float", "-u_scanf_float" ]
-    ldflags = cflags + [ "-T../firmware/rtos/gcc/STM32F411CEUx_FLASH.ld" ]
-    include_dirs = [
-        # include
-        "core",
-        "rtos/inc",
-        "lib/stm32f4/Inc",
-        "lib/stm32f4/Inc/Legacy",
-        "lib/cmsis/CMSIS/Core/Include",
-        "lib/cmsis/CMSIS/DSP/Include",
-        "lib/cmsis_device_f4/Include",
-        "lib/freertos/FreeRTOS/Source/include",
-        "lib/freertos/FreeRTOS/Source/portable/GCC/ARM_CM4F",
-        "lib/freertos/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI" ]
-    sources = [
-        # startup
-        "rtos/gcc/startup_stm32f411xe.s",
-        # zlcr src
-        "core/zlcr_beta_core.c",
-        "rtos/src/zlcr_beta_bsp.c",
-        # main
-        "rtos/src/main.c",
-        "rtos/src/stm32f4xx_hal_msp.c",
-        "rtos/src/stm32f4xx_hal_timebase_tim.c",
-        "rtos/src/stm32f4xx_it.c",
-        "rtos/src/system_stm32f4xx.c",
-        # rtos src
-        "rtos/src/cmsis_os.c",
-        "rtos/src/freertos.c",
-        "lib/freertos/FreeRTOS/Source/event_groups.c",
-        "lib/freertos/FreeRTOS/Source/timers.c",
-        "lib/freertos/FreeRTOS/Source/tasks.c",
-        "lib/freertos/FreeRTOS/Source/croutine.c",
-        "lib/freertos/FreeRTOS/Source/list.c",
-        "lib/freertos/FreeRTOS/Source/queue.c",
-        "lib/freertos/FreeRTOS/Source/portable/MemMang/heap_4.c",
-        "lib/freertos/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c",
-        "lib/freertos/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI/FreeRTOS_CLI.c",
-        # cmsis src
-        "lib/cmsis/CMSIS/DSP/Source/BasicMathFunctions/arm_mult_f32.c",
-        "lib/cmsis/CMSIS/DSP/Source/FilteringFunctions/arm_biquad_cascade_df1_init_f32.c",
-        "lib/cmsis/CMSIS/DSP/Source/FilteringFunctions/arm_biquad_cascade_df1_f32.c",
-        "lib/cmsis/CMSIS/DSP/Source/FilteringFunctions/arm_fir_init_f32.c",
-        "lib/cmsis/CMSIS/DSP/Source/FilteringFunctions/arm_fir_f32.c",
-        "lib/cmsis/CMSIS/DSP/Source/SupportFunctions/arm_copy_f32.c",
-        # hal src
-        "lib/stm32f4/Src/stm32f4xx_hal.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_i2c.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_i2s_ex.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_rcc_ex.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_rcc.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_uart.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_spi.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_tim.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_flash_ramfunc.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_dma.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_cortex.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_flash.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_pwr.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_pwr_ex.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_gpio.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_i2c_ex.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_tim_ex.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_flash_ex.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_dma_ex.c",
-        "lib/stm32f4/Src/stm32f4xx_hal_i2s.c" ]
-    libs = [ "m", "c", "nosys" ]
+config("cortex-m4") {
+  cflags = [
+    "-mthumb",
+    "-mcpu=cortex-m4",
+  ]
+}
+
+config("cortex-m4_fpu") {
+  defines = [
+    "ARM_MATH_CM4",
+    "__FPU_PRESENT=1U",
+  ]
+  cflags = [
+    "-mfloat-abi=hard",
+    "-mfpu=fpv4-sp-d16",
+    "-u_printf_float",
+    "-u_scanf_float",
+  ]
+}
+
+config("stm32f411xe") {
+  defines = [
+    "USE_HAL_DRIVER",
+    "STM32F411xE",
+  ]
+}
+
+config("cortex-m4_flag") {
+  cflags = [
+    "-g",
+    "-O3",
+    "-Wall",
+  ]
+}
+
+static_library("stm32f4xx_hal") {
+  configs = [
+    ":cortex-m4",
+    ":cortex-m4_fpu",
+    ":cortex-m4_flag",
+    ":stm32f411xe",
+  ]
+  include_dirs = [
+    "rtos/inc",
+    "lib/stm32f4/Inc",
+    "lib/cmsis/CMSIS/Core/Include",
+    "lib/cmsis_device_f4/Include",
+  ]
+  sources = [
+    "lib/stm32f4/Src/stm32f4xx_hal.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_cortex.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_dma.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_dma_ex.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_flash.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_flash_ex.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_flash_ramfunc.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_gpio.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_i2c.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_i2c_ex.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_i2s.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_i2s_ex.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_pwr.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_pwr_ex.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_rcc.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_rcc_ex.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_spi.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_tim.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_tim_ex.c",
+    "lib/stm32f4/Src/stm32f4xx_hal_uart.c",
+  ]
+}
+
+static_library("freertos") {
+  configs = [
+    ":cortex-m4",
+    ":cortex-m4_fpu",
+    ":cortex-m4_flag",
+    ":stm32f411xe",
+  ]
+  include_dirs = [
+    "rtos/inc",
+    "lib/stm32f4/Inc",
+    "lib/cmsis/CMSIS/Core/Include",
+    "lib/cmsis_device_f4/Include",
+    "lib/freertos/FreeRTOS/Source/include",
+    "lib/freertos/FreeRTOS/Source/portable/GCC/ARM_CM4F",
+    "lib/freertos/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI",
+  ]
+  sources = [
+    "lib/freertos/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI/FreeRTOS_CLI.c",
+    "lib/freertos/FreeRTOS/Source/croutine.c",
+    "lib/freertos/FreeRTOS/Source/event_groups.c",
+    "lib/freertos/FreeRTOS/Source/list.c",
+    "lib/freertos/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c",
+    "lib/freertos/FreeRTOS/Source/portable/MemMang/heap_4.c",
+    "lib/freertos/FreeRTOS/Source/queue.c",
+    "lib/freertos/FreeRTOS/Source/tasks.c",
+    "lib/freertos/FreeRTOS/Source/timers.c",
+    "rtos/src/cmsis_os.c",
+    "rtos/src/freertos.c",
+  ]
+}
+
+static_library("zlcr_core") {
+  configs = [
+    ":cortex-m4",
+    ":cortex-m4_fpu",
+    ":cortex-m4_flag",
+    ":stm32f411xe",
+  ]
+  include_dirs = [
+    "core/inc",
+    "lib/cmsis/CMSIS/Core/Include",
+    "lib/cmsis/CMSIS/DSP/Include",
+  ]
+  sources = [
+    "core/src/zlcr_core.c",
+    "core/src/zlcr_core_dds.c",
+    "core/src/zlcr_core_mixer.c",
+    "lib/cmsis/CMSIS/DSP/Source/BasicMathFunctions/arm_mult_f32.c",
+    "lib/cmsis/CMSIS/DSP/Source/FilteringFunctions/arm_biquad_cascade_df1_f32.c",
+    "lib/cmsis/CMSIS/DSP/Source/FilteringFunctions/arm_biquad_cascade_df1_init_f32.c",
+    "lib/cmsis/CMSIS/DSP/Source/FilteringFunctions/arm_fir_f32.c",
+    "lib/cmsis/CMSIS/DSP/Source/FilteringFunctions/arm_fir_init_f32.c",
+    "lib/cmsis/CMSIS/DSP/Source/SupportFunctions/arm_copy_f32.c",
+  ]
+}
+
+executable("zlcr_beta_rtos") {
+  configs = [
+    ":cortex-m4",
+    ":cortex-m4_fpu",
+    ":cortex-m4_flag",
+    ":stm32f411xe",
+  ]
+  ldflags = [
+    "-mthumb",
+    "-mcpu=cortex-m4",
+    "-mfloat-abi=hard",
+    "-mfpu=fpv4-sp-d16",
+    "-T../firmware/rtos/gcc/STM32F411CEUx_FLASH.ld",
+  ]
+  include_dirs = [
+    "core/inc",
+    "rtos/inc",
+    "lib/stm32f4/Inc",
+    "lib/cmsis/CMSIS/Core/Include",
+    "lib/cmsis/CMSIS/DSP/Include",
+    "lib/cmsis_device_f4/Include",
+    "lib/freertos/FreeRTOS/Source/include",
+    "lib/freertos/FreeRTOS/Source/portable/GCC/ARM_CM4F",
+    "lib/freertos/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI",
+  ]
+  sources = [
+    "rtos/gcc/startup_stm32f411xe.s",
+    "rtos/src/main.c",
+    "rtos/src/stm32f4xx_hal_msp.c",
+    "rtos/src/stm32f4xx_hal_timebase_tim.c",
+    "rtos/src/stm32f4xx_it.c",
+    "rtos/src/system_stm32f4xx.c",
+    "rtos/src/zlcr_beta_bsp.c",
+  ]
+  deps = [
+    ":freertos",
+    ":stm32f4xx_hal",
+    ":zlcr_core",
+  ]
+  libs = [
+    "m",
+    "c",
+    "nosys",
+  ]
 }

@@ -3,19 +3,15 @@
         {
             "name": "Linux",
             "browse": {
-                "path": [
-                    "${workspaceFolder}"
-                ],
                 "limitSymbolsToIncludedHeaders": true
             },
             "includePath": [
-                "${workspaceFolder}/firmware/core",
+                "${workspaceFolder}/firmware/core/inc",
                 "${workspaceFolder}/firmware/rtos/inc",
                 "${workspaceFolder}/firmware/lib/cmsis/CMSIS/DSP/Include",
                 "${workspaceFolder}/firmware/lib/cmsis/CMSIS/Core/Include",
                 "${workspaceFolder}/firmware/lib/cmsis_device_f4/Include",
                 "${workspaceFolder}/firmware/lib/stm32f4/Inc",
-                "${workspaceFolder}/firmware/lib/stm32f4/Inc/Legacy",
                 "${workspaceFolder}/firmware/lib/freertos/FreeRTOS/Source",
                 "${workspaceFolder}/firmware/lib/freertos/FreeRTOS/Source/include",
                 "${workspaceFolder}/firmware/lib/freertos/FreeRTOS/Source/portable/GCC/ARM_CM4F",
@@ -32,7 +28,7 @@
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "clang-x64"
+            "intelliSenseMode": "gcc-arm"
         }
     ],
     "version": 4

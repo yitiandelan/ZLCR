@@ -1,5 +1,5 @@
 /**
- * @file    zlcr_beta_bsp.h
+ * @file    zlcr_core.h
  * @author  TIANLAN <yitiandelan@outlook.com>
  * @date    2020-07-29
  * @brief   
@@ -19,16 +19,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef _ZLCR_BETA_BSP_H
-#define _ZLCR_BETA_BSP_H
+#ifndef _ZLCR_CORE_H
+#define _ZLCR_CORE_H
 
-#define I2C_ADDRESS (0x18 << 1)
-#define ZLCR_Beta_BSP_Delay(t) osDelay(t)
+void ZLCR_Core_Init(void);
+void ZLCR_Core_DeInit(void);
+void ZLCR_Core_IDLE(void);
+void ZLCR_Core_ISR(unsigned short *txbuf, unsigned short *rxbuf, unsigned short offset, unsigned short size);
 
-void ZLCR_Beta_BSP_Init(void);
-void ZLCR_Beta_BSP_REPL_PutString(const char *pcString, unsigned short usStringLength);
-void ZLCR_Beta_BSP_REPL_PutChar(signed char cOutChar);
-unsigned int ZLCR_Beta_BSP_REPL_GetChar(signed char *pcRxedChar);
-void ZLCR_Beta_BSP_I2C_Write(char REG_Address, char REG_data);
+void ZLCR_Core_SetFreq(float *freq);
+void ZLCR_Core_GetFreq(float *freq);
+
+unsigned int ZLCR_Core_SetData(float *data);
+unsigned int ZLCR_Core_GetData(float *data);
 
 #endif

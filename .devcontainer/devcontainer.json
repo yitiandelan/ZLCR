@@ -8,7 +8,10 @@
 	},
 	"extensions": [
 		"ms-vscode.cpptools",
-		"npclaudiu.vscode-gn"
+		"ms-python.python",
+		"marus25.cortex-debug",
+		"npclaudiu.vscode-gn",
+		"persidskiy.vscode-gnformat"
 	],
 	"remoteUser": "tianlan"
 }

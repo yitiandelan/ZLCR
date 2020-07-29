@@ -24,7 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "zlcr_beta_bsp.h"
-#include "zlcr_beta_core.h"
+#include "zlcr_core.h"
 #include "FreeRTOS_CLI.h"
 #include "string.h"
 #include "arm_math.h"
@@ -66,7 +66,7 @@ osThreadId myTask02Handle;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 /* Const messages output by the command console. */
-static const char *const pcWelcomeMessage = "\r\nZLCR beta rev.c TIANLAN <yitiandelan@outlook.com> 2020-07-21\r\n";
+static const char *const pcWelcomeMessage = "\r\n";
 static const char *const pcEndOfOutputMessage = "\r\n> ";
 static const char *const pcNewLine = "\r\n";
 static const char *const pcHelpMessage =
@@ -78,6 +78,7 @@ option:\r\n\
   -o FORMAT     Set output format (default: JSON); FORMAT is JSON:RAW:NULL\r\n\
   -h, --help    Print help message and exit\r\n\
   -v, --version Print version and exit\r\n";
+static const char *const pcVersionMessage = "{\"HW\": \"ZLCR BETA REV.C\", \"FW\": \"v0.1.1\", \"API\": 2}\r\n";
 
 static BaseType_t prvZLCRCommand(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString)
 {
@@ -118,14 +119,14 @@ static BaseType_t prvZLCRCommand(char *pcWriteBuffer, size_t xWriteBufferLen, co
             }
             else if (!strncmp(pcParameter, "-v", 2) || !strncmp(pcParameter, "--version", 9))
             {
-                strcpy(pcWriteBuffer, pcWelcomeMessage);
+                strcpy(pcWriteBuffer, pcVersionMessage);
                 xReturn = pdFALSE;
             }
             else if (!strncmp(pcParameter, "-f", 2))
             {
                 if (sscanf(pcParameter, "-f %f", &f))
                 {
-                    ZLCR_SetFreq(&f);
+                    ZLCR_Core_SetFreq(&f);
                     uxParameterNumber += 2;
                 }
                 else
@@ -156,9 +157,9 @@ static BaseType_t prvZLCRCommand(char *pcWriteBuffer, size_t xWriteBufferLen, co
         }
         else
         {
-            ZLCR_GetFreq(&f);
+            ZLCR_Core_GetFreq(&f);
 
-            if (ZLCR_GetData(&ans[0]))
+            if (ZLCR_Core_GetData(&ans[0]))
             {
                 osDelay(5);
             }
@@ -186,7 +187,7 @@ static BaseType_t prvZLCRCommand(char *pcWriteBuffer, size_t xWriteBufferLen, co
             }
 
             /* press CTRL+C to exit */
-            if (ZLCR_BSP_UART_GetChar(&cRxedChar))
+            if (ZLCR_Beta_BSP_REPL_GetChar(&cRxedChar))
             {
                 if (cRxedChar == 0x03)
                 {
@@ -285,8 +286,8 @@ int main(void)
     MX_USART1_UART_Init();
     MX_USART6_UART_Init();
     /* USER CODE BEGIN 2 */
-    ZLCR_BSP_Init();
-    ZLCR_Init();
+    ZLCR_Beta_BSP_Init();
+    ZLCR_Core_Init();
     /* USER CODE END 2 */
 
     /* USER CODE BEGIN RTOS_MUTEX */
@@ -628,7 +629,7 @@ void StartDefaultTask(void const *argument)
     /* Infinite loop */
     for (;;)
     {
-        ZLCR_IDLE();
+        ZLCR_Core_IDLE();
     }
     /* USER CODE END 5 */
 }
@@ -653,28 +654,28 @@ void SysTask(void const *argument)
     FreeRTOS_CLIRegisterCommand(&xRebootCmd);
     pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 
-    ZLCR_BSP_UART_PutString(pcWelcomeMessage, (unsigned short)strlen(pcWelcomeMessage));
-    ZLCR_BSP_UART_PutString(pcEndOfOutputMessage, (unsigned short)strlen(pcEndOfOutputMessage));
+    ZLCR_Beta_BSP_REPL_PutString(pcWelcomeMessage, (unsigned short)strlen(pcWelcomeMessage));
+    ZLCR_Beta_BSP_REPL_PutString(pcEndOfOutputMessage, (unsigned short)strlen(pcEndOfOutputMessage));
 
     /* Infinite loop */
     for (;;)
     {
-        for (; ZLCR_BSP_UART_GetChar(&cRxedChar) != pdPASS;)
+        for (; ZLCR_Beta_BSP_REPL_GetChar(&cRxedChar) != pdPASS;)
         {
             osDelay(10);
         }
-        ZLCR_BSP_UART_PutChar(cRxedChar);
+        ZLCR_Beta_BSP_REPL_PutChar(cRxedChar);
 
         if (cRxedChar == '\n' || cRxedChar == '\r')
         {
             if (ucInputIndex != 0)
             {
-                ZLCR_BSP_UART_PutString(pcNewLine, (unsigned short)strlen(pcNewLine));
+                ZLCR_Beta_BSP_REPL_PutString(pcNewLine, (unsigned short)strlen(pcNewLine));
 
                 for (xReturned = pdTRUE; xReturned != pdFALSE;)
                 {
                     xReturned = FreeRTOS_CLIProcessCommand(cInputString, pcOutputString, configCOMMAND_INT_MAX_OUTPUT_SIZE);
-                    ZLCR_BSP_UART_PutString(pcOutputString, (unsigned short)strlen(pcOutputString));
+                    ZLCR_Beta_BSP_REPL_PutString(pcOutputString, (unsigned short)strlen(pcOutputString));
                 }
             }
 
@@ -682,7 +683,7 @@ void SysTask(void const *argument)
             ucInputIndex = 0;
             memset(cInputString, 0x00, 64);
 
-            ZLCR_BSP_UART_PutString(pcEndOfOutputMessage, (unsigned short)strlen(pcEndOfOutputMessage));
+            ZLCR_Beta_BSP_REPL_PutString(pcEndOfOutputMessage, (unsigned short)strlen(pcEndOfOutputMessage));
         }
         else if ((cRxedChar == '\b') || (cRxedChar == 0x7F))
         {

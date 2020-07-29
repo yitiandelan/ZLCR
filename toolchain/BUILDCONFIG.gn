@@ -1,1 +1,1 @@
-set_default_toolchain("//toolchain/gcc:arm-none-eabi-gcc")
+set_default_toolchain("//toolchain/gcc:gcc")
