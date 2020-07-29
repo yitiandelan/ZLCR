@@ -1,7 +1,7 @@
 /**
- * @file    zlcr_beta_core.c
+ * @file    zlcr_core.c
  * @author  TIANLAN <yitiandelan@outlook.com>
- * @date    2020-07-21
+ * @date    2020-07-29
  * @brief   
  *
  * Copyright (c) 2016-2020, TIANLAN.tech
@@ -20,7 +20,7 @@
  * limitations under the License.
  */
 
-#include "zlcr_beta_core.h"
+#include "zlcr_core.h"
 #include "arm_math.h"
 
 float ZLCR_LPF_A_i[4][512];
@@ -47,17 +47,12 @@ unsigned short ZLCR_BUF_LR;
 const short ZLCR_Coeffs_Q15[];
 const float ZLCR_Coeffs_f32[];
 
-void ZLCR_Init(void)
+void ZLCR_Core_Init(void)
 {
-    // initialization parameter
-    ZLCR_DDS_DR = 1000.0f;
-    ZLCR_DDS_SR = 0;
-    ZLCR_BUF_LR = 0;
     ZLCR_FIFO_WR = 0;
     ZLCR_FIFO_RD = 0;
     ZLCR_FIFO_OVF = 0;
 
-    // initialization filter
     for (int t = 0; t < 8; t++)
     {
         arm_biquad_cascade_df1_init_f32(&ZLCR_LPF_B_Inst[t],
@@ -66,16 +61,18 @@ void ZLCR_Init(void)
                                         (float *)&ZLCR_LPF_B_State[t]);
     }
 
-    // initialization output freq
-    ZLCR_SetFreq(&ZLCR_DDS_DR);
+    ZLCR_DDS_DR = 1000.0f;
+    ZLCR_DDS_SR = 0;
+    ZLCR_Core_SetFreq(&ZLCR_DDS_DR);
+
+    ZLCR_BUF_LR = 0;
 }
 
-void ZLCR_DeInit(void)
+void ZLCR_Core_DeInit(void)
 {
-    // wait last processing
 }
 
-void ZLCR_IDLE(void)
+void ZLCR_Core_IDLE(void)
 {
     unsigned short p0, p1, n;
     float *pt[4];
@@ -165,7 +162,7 @@ void ZLCR_IDLE(void)
             ans[2] = ZLCR_LPF_C_o[2][p0] * -1.101640352185941e-10;
             ans[3] = ZLCR_LPF_C_o[3][p0] * -1.101640352185941e-10;
 
-            ZLCR_SetData(&ans[0]);
+            ZLCR_Core_SetData(&ans[0]);
         }
 
         // complete
@@ -173,7 +170,7 @@ void ZLCR_IDLE(void)
     }
 }
 
-void ZLCR_ISR(unsigned short *txbuf, unsigned short *rxbuf, unsigned short offset, unsigned short size)
+void ZLCR_Core_ISR(unsigned short *txbuf, unsigned short *rxbuf, unsigned short offset, unsigned short size)
 {
     if (ZLCR_BUF_LR == 0)
     {
@@ -189,7 +186,7 @@ void ZLCR_ISR(unsigned short *txbuf, unsigned short *rxbuf, unsigned short offse
     }
 }
 
-void ZLCR_SetFreq(float *freq)
+void ZLCR_Core_SetFreq(float *freq)
 {
     float f;
     f = (*freq > 90000.0f) ? 90000.0f : (*freq < 0.0f) ? 0.0f : *freq;
@@ -197,12 +194,12 @@ void ZLCR_SetFreq(float *freq)
     ZLCR_DDS_DR = ZLCR_DDS_TR / 22906.5f;
 }
 
-void ZLCR_GetFreq(float *freq)
+void ZLCR_Core_GetFreq(float *freq)
 {
     *freq = ZLCR_DDS_DR;
 }
 
-unsigned int ZLCR_SetData(float *data)
+unsigned int ZLCR_Core_SetData(float *data)
 {
     if (ZLCR_FIFO_WR == ZLCR_FIFO_RD)
     {
@@ -216,7 +213,7 @@ unsigned int ZLCR_SetData(float *data)
     return 0;
 }
 
-unsigned int ZLCR_GetData(float *data)
+unsigned int ZLCR_Core_GetData(float *data)
 {
     unsigned short t = (ZLCR_FIFO_WR + 0xfc) & 0xff;
 

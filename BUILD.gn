@@ -1,3 +1,11 @@
+group("doc") {
+  deps = []
+}
+
 group("firmware") {
-    deps = [ "firmware:zlcr_beta" ]
+  deps = [ "firmware:zlcr_beta_rtos(//toolchain/gcc:eabi)" ]
+}
+
+group("software") {
+  deps = []
 }

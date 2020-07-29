@@ -78,7 +78,7 @@ toolchain("gcc") {
   }
 }
 
-toolchain("arm-none-eabi-gcc") {
+toolchain("eabi") {
   tool("cc") {
     depfile = "{{output}}.d"
     command = "arm-none-eabi-gcc -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_c}} -c {{source}} -o {{output}}"

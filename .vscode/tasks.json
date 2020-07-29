@@ -59,7 +59,7 @@
                 "-f",
                 "target/stm32f4x.cfg",
                 "-c",
-                "'program build/zlcr_beta.elf reset exit'"
+                "'program build/eabi/zlcr_beta_rtos.elf reset exit'"
             ],
             "options": {
                 "cwd": "${workspaceRoot}"
