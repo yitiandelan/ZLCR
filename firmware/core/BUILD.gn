@@ -1,0 +1,18 @@
+config("config") {
+  include_dirs = [ "inc" ]
+}
+
+static_library("zlcr_core") {
+  public_configs = [ ":config" ]
+  configs = [
+    "//firmware/lib:cmsis",
+    "//firmware/lib:stm32f411xe",
+    "//firmware/lib:stm32f4xx_hard_fpu",
+  ]
+  sources = [
+    "src/zlcr_core.c",
+    "src/zlcr_core_dds.c",
+    "src/zlcr_core_mixer.c",
+  ]
+  public_deps = [ "//firmware/lib:cmsis_dsp" ]
+}

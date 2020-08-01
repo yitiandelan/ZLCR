@@ -1,0 +1,29 @@
+executable("zlcr_beta") {
+  ldflags = [
+    "-mthumb",
+    "-mcpu=cortex-m4",
+    "-mfloat-abi=hard",
+    "-mfpu=fpv4-sp-d16",
+    "-T../firmware/rtos/gcc/STM32F411CEUx_FLASH.ld",
+  ]
+  sources = [
+    "gcc/startup_stm32f411xe.s",
+    "src/cmsis_os.c",
+    "src/freertos.c",
+    "src/main.c",
+    "src/stm32f4xx_hal_msp.c",
+    "src/stm32f4xx_hal_timebase_tim.c",
+    "src/stm32f4xx_it.c",
+    "src/system_stm32f4xx.c",
+  ]
+  deps = [
+    "//firmware/bsp:zlcr_beta_bsp",
+    "//firmware/lib:freertos_plus",
+    "//firmware/lib:stm32f4xx_hal",
+  ]
+  libs = [
+    "m",
+    "c",
+    "nosys",
+  ]
+}

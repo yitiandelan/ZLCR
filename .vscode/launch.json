@@ -5,7 +5,7 @@
             "name": "启动调试",
             "type": "cortex-debug",
             "request": "launch",
-            "executable": "build/eabi/zlcr_beta_rtos.elf",
+            "executable": "build/eabi/zlcr_beta.elf",
             "cwd": "${workspaceFolder}",
             "gdbTarget": "localhost:3333",
             "servertype": "external",
