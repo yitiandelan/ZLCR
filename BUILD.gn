@@ -3,7 +3,7 @@ group("doc") {
 }
 
 group("firmware") {
-  deps = [ "firmware:zlcr_beta_rtos(//toolchain/gcc:eabi)" ]
+  deps = [ "firmware/rtos:zlcr_beta(//toolchain/gcc:eabi)" ]
 }
 
 group("software") {

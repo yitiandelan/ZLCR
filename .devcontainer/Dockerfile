@@ -9,5 +9,6 @@ RUN useradd --create-home tianlan \
     && echo "tianlan ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 RUN pacman -Sy --noconfirm \
-    arm-none-eabi-gcc arm-none-eabi-newlib make ninja gn gcc \
+    arm-none-eabi-gcc arm-none-eabi-newlib make ninja gn \
+    python gcc lib32-glibc lib32-gcc-libs \
     && pacman -Sc --noconfirm

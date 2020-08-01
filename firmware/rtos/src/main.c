@@ -29,6 +29,12 @@
 #include "string.h"
 #include "arm_math.h"
 #include "stdio.h"
+#include "py/compile.h"
+#include "py/runtime.h"
+#include "py/repl.h"
+#include "py/gc.h"
+#include "py/mperrno.h"
+#include "lib/utils/pyexec.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,6 +71,63 @@ osThreadId defaultTaskHandle;
 osThreadId myTask02Handle;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+static char *stack_top;
+static char heap[2048];
+
+void gc_collect(void)
+{
+    void *dummy;
+    gc_collect_start();
+    gc_collect_root(&dummy, ((mp_uint_t)stack_top - (mp_uint_t)&dummy) / sizeof(mp_uint_t));
+    gc_collect_end();
+    gc_dump_info();
+}
+
+mp_lexer_t *mp_lexer_new_from_file(const char *filename)
+{
+    mp_raise_OSError(MP_ENOENT);
+}
+
+mp_import_stat_t mp_import_stat(const char *path)
+{
+    return MP_IMPORT_STAT_NO_EXIST;
+}
+
+mp_obj_t mp_builtin_open(size_t n_args, const mp_obj_t *args, mp_map_t *kwargs)
+{
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_KW(mp_builtin_open_obj, 1, mp_builtin_open);
+
+void nlr_jump_fail(void *val)
+{
+    for (;;)
+    {
+    }
+}
+
+void NORETURN __fatal_error(const char *msg)
+{
+    for (;;)
+    {
+    }
+}
+
+int mp_hal_stdin_rx_chr(void)
+{
+    unsigned char c = 0;
+    for (; ZLCR_Beta_BSP_REPL_GetChar((signed char *)&c) == 0;)
+    {
+        osDelay(1);
+    }
+    return c;
+}
+
+void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len)
+{
+    ZLCR_Beta_BSP_REPL_PutString(str, len);
+}
+
 /* Const messages output by the command console. */
 static const char *const pcWelcomeMessage = "\r\n";
 static const char *const pcEndOfOutputMessage = "\r\n> ";
@@ -213,6 +276,17 @@ static BaseType_t prvRebootCommand(char *pcWriteBuffer, size_t xWriteBufferLen, 
     return pdPASS;
 }
 
+static BaseType_t prvPythonCommand(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString)
+{
+    int stack_dummy;
+    stack_top = (char *)&stack_dummy;
+    gc_init(heap, heap + sizeof(heap));
+    mp_init();
+    pyexec_friendly_repl();
+    mp_deinit();
+    return pdFALSE;
+}
+
 static const CLI_Command_Definition_t xZLCRCmd = {
     "zlcr", /* The command string to type. */
     "zlcr:\r\n Open-Source-Hardware L-C-R Meter\r\n\r\n",
@@ -227,6 +301,12 @@ static const CLI_Command_Definition_t xRebootCmd = {
     -1                /* No parameters are expected. */
 };
 
+static const CLI_Command_Definition_t xPythonCmd = {
+    "python", /* The command string to type. */
+    "python:\r\n Launch MicroPython REPL\r\n\r\n",
+    prvPythonCommand, /* The function to run. */
+    -1                /* No parameters are expected. */
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -651,6 +731,7 @@ void SysTask(void const *argument)
     BaseType_t xReturned;
 
     FreeRTOS_CLIRegisterCommand(&xZLCRCmd);
+    FreeRTOS_CLIRegisterCommand(&xPythonCmd);
     FreeRTOS_CLIRegisterCommand(&xRebootCmd);
     pcOutputString = FreeRTOS_CLIGetOutputBuffer();
 

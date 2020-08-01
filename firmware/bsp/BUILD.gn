@@ -1,0 +1,11 @@
+config("config") {
+  include_dirs = [ "inc" ]
+}
+
+static_library("zlcr_beta_bsp") {
+  public_configs = [ ":config" ]
+  configs = [ "//firmware/lib:cmsis_os" ]
+  sources = [ "src/zlcr_beta_bsp.c" ]
+  deps = [ "//firmware/lib:stm32f4xx_hal" ]
+  public_deps = [ "//firmware/core:zlcr_core" ]
+}
