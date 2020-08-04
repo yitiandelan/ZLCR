@@ -10,3 +10,6 @@
 [submodule "firmware/lib/cmsis_device_f4"]
 	path = firmware/lib/cmsis_device_f4
 	url = https://github.com/STMicroelectronics/cmsis_device_f4.git
+[submodule "firmware/lib/micropython"]
+	path = firmware/lib/micropython
+	url = https://github.com/micropython/micropython.git
