@@ -66,3 +66,5 @@ typedef long mp_off_t;
 
 #define MICROPY_PORT_ROOT_POINTERS \
     const char *readline_hist[8];
+
+#define MICROPY_USE_INTERNAL_PRINTF (0)

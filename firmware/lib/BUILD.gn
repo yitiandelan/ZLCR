@@ -283,7 +283,6 @@ static_library("micropython_lib") {
   public_configs = [ ":micropython" ]
   sources = [
     "micropython/lib/mp-readline/readline.c",
-    "micropython/lib/utils/printf.c",
     "micropython/lib/utils/pyexec.c",
     "micropython/lib/utils/stdout_helpers.c",
   ]
