@@ -15,11 +15,14 @@ executable("zlcr_beta") {
     "src/stm32f4xx_hal_timebase_tim.c",
     "src/stm32f4xx_it.c",
     "src/system_stm32f4xx.c",
+    target_out_dir + "/../lib/_frozen_mpy.c",
   ]
   deps = [
-    "//firmware/bsp:zlcr_beta_bsp",
-    "//firmware/lib:freertos_plus",
-    "//firmware/lib:stm32f4xx_hal",
+    "../bsp:zlcr_beta_bsp",
+    "../lib:freertos_plus",
+    "../lib:stm32f4xx_hal",
+    "../lib:micropython_lib",
+    "../lib:gen-frozen",
   ]
   libs = [
     "m",
