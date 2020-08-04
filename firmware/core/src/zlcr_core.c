@@ -1,7 +1,7 @@
 /**
  * @file    zlcr_core.c
  * @author  TIANLAN <yitiandelan@outlook.com>
- * @date    2020-07-29
+ * @date    2020-08-05
  * @brief   
  *
  * Copyright (c) 2016-2020, TIANLAN.tech
@@ -189,9 +189,9 @@ void ZLCR_Core_ISR(unsigned short *txbuf, unsigned short *rxbuf, unsigned short 
 void ZLCR_Core_SetFreq(float *freq)
 {
     float f;
-    f = (*freq > 90000.0f) ? 90000.0f : (*freq < 0.0f) ? 0.0f : *freq;
-    ZLCR_DDS_TR = 22906.5f * f;
-    ZLCR_DDS_DR = ZLCR_DDS_TR / 22906.5f;
+    f = (*freq > 100000.0f) ? 100000.0f : (*freq < 0.0f) ? 0.0f : *freq;
+    ZLCR_DDS_TR = 20361.32644f * f;
+    ZLCR_DDS_DR = ZLCR_DDS_TR / 20361.32644f;
 }
 
 void ZLCR_Core_GetFreq(float *freq)
