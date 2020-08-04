@@ -10,5 +10,6 @@ RUN useradd --create-home tianlan \
 
 RUN pacman -Sy --noconfirm \
     arm-none-eabi-gcc arm-none-eabi-newlib make ninja gn \
-    python gcc lib32-glibc lib32-gcc-libs \
-    && pacman -Sc --noconfirm
+    python python-pip \
+    && pacman -Sc --noconfirm \
+    && pip install fire
