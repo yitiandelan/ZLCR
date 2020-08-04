@@ -59,6 +59,7 @@ class genhdr:
             return -1
         self.join(RootDir)
         # print(f'GEN {OutFile}')
+        os.chdir(RootDir)
         from makeversionhdr import make_version_header
         fo = io.StringIO()
         with redirect_stdout(fo):
@@ -82,7 +83,7 @@ class genhdr:
         fn += [f'{WorkDir}/{n}' for n in os.listdir(WorkDir) if f(n)]
         fp = f'{OutDir}/qstr.i.last'
         # print(f'GEN {fp}')
-        command = f'gcc -E -DNO_QSTR -DMICROPY_ROM_TEXT_COMPRESSION=1 -I{" -I".join(Include)} {" ".join(fn)}'
+        command = f'arm-none-eabi-gcc -E -DNO_QSTR -DMICROPY_ROM_TEXT_COMPRESSION=1 -I{" -I".join(Include)} {" ".join(fn)}'
         # if os.path.exists(fp):
         #     os.remove(fp)
         os.system(f'{command} > {fp}')
@@ -99,29 +100,23 @@ class genhdr:
         # print(f'GEN {fp}')
         command = f'cat {self.path}/qstrdefs.h {QSTR} {ft}'
         command += """| sed 's/^Q(.*)/"&"/'"""
-        command += f'| gcc -E -DNO_QSTR -DMICROPY_ROM_TEXT_COMPRESSION=1 -I{" -I".join(Include)} -'
+        command += f'| arm-none-eabi-gcc -E -DNO_QSTR -DMICROPY_ROM_TEXT_COMPRESSION=1 -I{" -I".join(Include)} -'
         command += """| sed 's/^\\"\(Q(.*)\)\\"/\\1/'"""
         command += f' > {fp}'
-        # print(command)
         os.system(f'{command}')
         # ft = f'{OutFile}'
         # print(f'GEN {OutFile}')
         command = f'python {self.path}/makeqstrdata.py {fp} > {OutFile}'
         os.system(f'{command}')
 
-    def gen_frozen(self, RootDir, OutFile, WorkDir, QSTR_HEAD):
+    def gen_frozen(self, RootDir, OutFile, Files, QSTR_HEAD):
         if not os.path.isdir(os.path.dirname(OutFile)):
             return -1
-        if not os.path.isdir(WorkDir):
-            return -1
         self.join(RootDir)
-        # WorkDir = os.path.dirname(WorkDir)
-        OutDir = os.path.dirname(OutFile)
         # print(f'GEN {OutFile}')
-        command = f'python {RootDir}/tools/mpy-tool.py --freeze --qstr-header {QSTR_HEAD} -mlongint-impl none {WorkDir}/frozentest.mpy'
+        command = f'python {RootDir}/tools/mpy-tool.py --freeze --qstr-header {QSTR_HEAD} -mlongint-impl none {Files}'
         command += f' > {OutFile}'
         os.system(f'{command}')
-        # print(command)
 
 if __name__ == "__main__":
     fire.Fire(genhdr)
