@@ -284,6 +284,7 @@ static BaseType_t prvPythonCommand(char *pcWriteBuffer, size_t xWriteBufferLen, 
     mp_init();
     pyexec_friendly_repl();
     mp_deinit();
+    *pcWriteBuffer = '\0';
     return pdFALSE;
 }
 
