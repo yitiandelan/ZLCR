@@ -1,7 +1,7 @@
 /**
  * @file    zlcr_beta_bsp.c
  * @author  TIANLAN <yitiandelan@outlook.com>
- * @date    2020-07-29
+ * @date    2020-08-05
  * @brief   
  *
  * Copyright (c) 2016-2020, TIANLAN.tech
@@ -34,28 +34,37 @@ unsigned short ZLCR_Beta_ADCbuf[2048];
 unsigned short ZLCR_Beta_DACBuf[2048];
 
 const char ZLCR_Beta_BSP_CODEC_REG[][2] = {
-    /* DAC Step */
-    {0x00, 0x00}, // Select Page 0
-    {0x0b, 0x81}, // NDAC = 1, Power up
-    {0x0c, 0x82}, // MDAC = 2, Power up
+    /* PLL Setup */
+    {0x00, 0x00}, // Page 0
+    {0x04, 0x43}, // CODEC_CLK = PLL_CLK
+    {0x05, 0xa2}, // PLL P = 2, R = 2
+    {0x06, 0x1b}, // J = 27
+    {0x07, 0x00}, // PLL D (MSB) = 0x0
+    {0x08, 0x00}, // PLL D (LSB) = 0x0
+
+    /* DAC Setup */
+    {0x0b, 0x81}, // NDAC = 1
+    {0x0c, 0x82}, // MDAC = 2
     {0x0d, 0x00}, // DOSR = 128
     {0x0e, 0x80}, // DOSR LSB
-    {0x3c, 0x01}, // PRB_P1
 
-    /* ADC Step */
-    {0x12, 0x81}, // NADC = 1, Power up
-    {0x13, 0x82}, // MADC = 2, Power up
+    /* ADC Setup */
+    {0x12, 0x81}, // NADC = 1
+    {0x13, 0x82}, // MADC = 2
     {0x14, 0x80}, // AOSR = 128
+
+    {0x3c, 0x01}, // PRB_P1
     {0x3d, 0x01}, // PRB_R1
 
-    /* Audio Interface */
-    {0x1b, 0x00}, // 16bit
+    /* Audio Interface Setup */
+    {0x1b, 0xcc}, // LJF 16bit, WCLK BCLK Output
+    {0x1e, 0x88}, // N = 8
     {0x55, 0x00}, // ADC Phase Adjust Register
 
-    /* Power Step */
-    {0x00, 0x01}, // Select Page 1
+    /* Power Setup */
+    {0x00, 0x01}, // Page 1
     {0x01, 0x08}, // Disabled weak connection of AVDD with DVDD
-    {0x02, 0x01}, // Analog Block Power up, AVDD LDO Power up
+    {0x02, 0x01}, // Analog Block, AVDD LDO power up
     // {0x0a, 0x3b}, // Input Vcom = 0.9v, Output Vcom = 1.65v
     {0x0a, 0x03},
 
@@ -66,7 +75,7 @@ const char ZLCR_Beta_BSP_CODEC_REG[][2] = {
     // {0x7b, 0x01}, // REF settime to 40ms
     // {0x14, 0x25}, // HP settime  to
 
-    /* Input Step */
+    /* Input Setup */
     {0x34, 0x10}, // Route IN2L to LEFT_P with 10k
     {0x36, 0x10}, // Route IN2R to LEFT_M with 10k
     {0x37, 0x40}, // Route IN1R to RIGHT_P with 10k
@@ -75,7 +84,7 @@ const char ZLCR_Beta_BSP_CODEC_REG[][2] = {
     {0x3b, 0x00}, // Left  MicPGA not mute, gain to 0dB
     {0x3c, 0x00}, // Right MicPGA not mute, gain to 0dB
 
-    /* Output Step */
+    /* Output Setup */
     {0x0c, 0x08}, // Route Left  DAC to HPL
     {0x0d, 0x08}, // Route Right DAC to HPR
     {0x0e, 0x08}, // Route Left  DAC to LOL
@@ -89,10 +98,10 @@ const char ZLCR_Beta_BSP_CODEC_REG[][2] = {
     {0x16, 0x75}, // IN1L to HPL, MUTE
     {0x17, 0x75}, // IN1R to HPL, MUTE
 
-    {0x09, 0x3c}, // LOL, LOR, HPL, HPR, Power up
+    {0x09, 0x3c}, // LOL, LOR, HPL, HPR
 
-    /* Initial ok */
-    {0x00, 0x00}, // Select Page 0
+    /* Initial */
+    {0x00, 0x00}, // Page 0
     {0x3f, 0xd6}, // L&R DAC Power up
     {0x40, 0x00}, // L&R DAC not mute
     {0x51, 0xc0}, // L&R ADC Power up
@@ -119,7 +128,7 @@ void ZLCR_Beta_BSP_Init(void)
     ZLCR_Beta_BSP_I2C_Write(0x00, 0x00);
     ZLCR_Beta_BSP_I2C_Write(0x01, 0x01);
 
-    ZLCR_Beta_BSP_Delay(5);
+    HAL_Delay(5);
 
     /* TLV320AIC3204 init */
     for (unsigned short i = 0; i < size; i++)

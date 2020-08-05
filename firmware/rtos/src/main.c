@@ -58,7 +58,7 @@ I2S_HandleTypeDef hi2s3;
 DMA_HandleTypeDef hdma_i2s3_ext_rx;
 DMA_HandleTypeDef hdma_spi3_tx;
 
-SPI_HandleTypeDef hspi2;
+TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart6;
@@ -316,9 +316,9 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_I2S3_Init(void);
-static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART6_UART_Init(void);
+static void MX_TIM2_Init(void);
 void StartDefaultTask(void const *argument);
 void SysTask(void const *argument);
 
@@ -363,10 +363,12 @@ int main(void)
     MX_DMA_Init();
     MX_I2C1_Init();
     MX_I2S3_Init();
-    MX_SPI2_Init();
     MX_USART1_UART_Init();
     MX_USART6_UART_Init();
+    MX_TIM2_Init();
     /* USER CODE BEGIN 2 */
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+    HAL_Delay(50);
     ZLCR_Beta_BSP_Init();
     ZLCR_Core_Init();
     /* USER CODE END 2 */
@@ -513,10 +515,10 @@ static void MX_I2S3_Init(void)
 
     /* USER CODE END I2S3_Init 1 */
     hi2s3.Instance = SPI3;
-    hi2s3.Init.Mode = I2S_MODE_MASTER_TX;
-    hi2s3.Init.Standard = I2S_STANDARD_PHILIPS;
+    hi2s3.Init.Mode = I2S_MODE_SLAVE_TX;
+    hi2s3.Init.Standard = I2S_STANDARD_MSB;
     hi2s3.Init.DataFormat = I2S_DATAFORMAT_16B;
-    hi2s3.Init.MCLKOutput = I2S_MCLKOUTPUT_ENABLE;
+    hi2s3.Init.MCLKOutput = I2S_MCLKOUTPUT_DISABLE;
     hi2s3.Init.AudioFreq = I2S_AUDIOFREQ_192K;
     hi2s3.Init.CPOL = I2S_CPOL_LOW;
     hi2s3.Init.ClockSource = I2S_CLOCK_PLL;
@@ -531,39 +533,60 @@ static void MX_I2S3_Init(void)
 }
 
 /**
-  * @brief SPI2 Initialization Function
+  * @brief TIM2 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_SPI2_Init(void)
+static void MX_TIM2_Init(void)
 {
-    /* USER CODE BEGIN SPI2_Init 0 */
+    /* USER CODE BEGIN TIM2_Init 0 */
 
-    /* USER CODE END SPI2_Init 0 */
+    /* USER CODE END TIM2_Init 0 */
 
-    /* USER CODE BEGIN SPI2_Init 1 */
+    TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+    TIM_MasterConfigTypeDef sMasterConfig = {0};
+    TIM_OC_InitTypeDef sConfigOC = {0};
 
-    /* USER CODE END SPI2_Init 1 */
-    /* SPI2 parameter configuration*/
-    hspi2.Instance = SPI2;
-    hspi2.Init.Mode = SPI_MODE_MASTER;
-    hspi2.Init.Direction = SPI_DIRECTION_2LINES;
-    hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
-    hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
-    hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
-    hspi2.Init.NSS = SPI_NSS_SOFT;
-    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
-    hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
-    hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
-    hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-    hspi2.Init.CRCPolynomial = 10;
-    if (HAL_SPI_Init(&hspi2) != HAL_OK)
+    /* USER CODE BEGIN TIM2_Init 1 */
+
+    /* USER CODE END TIM2_Init 1 */
+    htim2.Instance = TIM2;
+    htim2.Init.Prescaler = 0;
+    htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim2.Init.Period = 24;
+    htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
     {
         Error_Handler();
     }
-    /* USER CODE BEGIN SPI2_Init 2 */
+    sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+    if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+    sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+    if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    sConfigOC.OCMode = TIM_OCMODE_PWM1;
+    sConfigOC.Pulse = 12;
+    sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+    sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+    if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN TIM2_Init 2 */
 
-    /* USER CODE END SPI2_Init 2 */
+    /* USER CODE END TIM2_Init 2 */
+    HAL_TIM_MspPostInit(&htim2);
 }
 
 /**
@@ -573,7 +596,6 @@ static void MX_SPI2_Init(void)
   */
 static void MX_USART1_UART_Init(void)
 {
-
     /* USER CODE BEGIN USART1_Init 0 */
 
     /* USER CODE END USART1_Init 0 */
@@ -605,7 +627,6 @@ static void MX_USART1_UART_Init(void)
   */
 static void MX_USART6_UART_Init(void)
 {
-
     /* USER CODE BEGIN USART6_Init 0 */
 
     /* USER CODE END USART6_Init 0 */
@@ -635,7 +656,6 @@ static void MX_USART6_UART_Init(void)
   */
 static void MX_DMA_Init(void)
 {
-
     /* DMA controller clock enable */
     __HAL_RCC_DMA2_CLK_ENABLE();
     __HAL_RCC_DMA1_CLK_ENABLE();
@@ -644,9 +664,9 @@ static void MX_DMA_Init(void)
     /* DMA1_Stream0_IRQn interrupt configuration */
     HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
-    /* DMA1_Stream7_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA1_Stream7_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DMA1_Stream7_IRQn);
+    /* DMA1_Stream5_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
     /* DMA2_Stream1_IRQn interrupt configuration */
     HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
@@ -676,21 +696,11 @@ static void MX_GPIO_Init(void)
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOA_CLK_ENABLE();
 
-    /*Configure GPIO pin Output Level */
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
-
     /*Configure GPIO pin : PC15 */
     GPIO_InitStruct.Pin = GPIO_PIN_15;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-    /*Configure GPIO pin : PB12 */
-    GPIO_InitStruct.Pin = GPIO_PIN_12;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
 
 /* USER CODE BEGIN 4 */
