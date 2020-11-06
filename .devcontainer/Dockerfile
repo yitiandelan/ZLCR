@@ -9,5 +9,7 @@ RUN useradd --create-home tianlan \
     && echo "tianlan ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 RUN pacman -Sy --noconfirm \
-    arm-none-eabi-gcc arm-none-eabi-newlib make ninja gn gcc \
-    && pacman -Sc --noconfirm
+    arm-none-eabi-gcc arm-none-eabi-newlib make ninja gn \
+    python python-pip \
+    && pacman -Sc --noconfirm \
+    && pip install fire

@@ -1,0 +1,353 @@
+config("stm32f411xe") {
+  cflags = [
+    "-mthumb",
+    "-mcpu=cortex-m4",
+  ]
+  defines = [
+    "STM32F411xE",
+    "USE_HAL_DRIVER",
+  ]
+  include_dirs = [
+    "//firmware/rtos/inc",
+    "stm32f4/Inc",
+    "cmsis_device_f4/Include",
+  ]
+  cflags += [
+    "-g",
+    "-O3",
+    "-Wall",
+  ]
+}
+
+config("stm32f4xx_hard_fpu") {
+  defines = [
+    "ARM_MATH_CM4",
+    "__FPU_PRESENT=1U",
+  ]
+  cflags = [
+    "-mfloat-abi=hard",
+    "-mfpu=fpv4-sp-d16",
+    "-u_printf_float",
+    "-u_scanf_float",
+  ]
+}
+
+config("cmsis") {
+  include_dirs = [
+    "cmsis/CMSIS/Core/Include",
+    "cmsis/CMSIS/DSP/Include",
+    "cmsis/CMSIS/Driver/Include",
+    "cmsis/CMSIS/NN/Include",
+  ]
+}
+
+config("cmsis_os") {
+  include_dirs = [
+    "//firmware/rtos/inc",
+    "freertos/FreeRTOS/Source/include",
+    "freertos/FreeRTOS/Source/portable/GCC/ARM_CM4F",
+    "freertos/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI",
+  ]
+}
+
+config("micropython") {
+  include_dirs = [
+    "micropython",
+    "micropython/lib/utils",
+    "micropython/lib/mp-readline",
+    "../port/inc",
+    target_out_dir,
+  ]
+}
+
+static_library("cmsis_dsp") {
+  configs = [
+    ":stm32f411xe",
+    ":stm32f4xx_hard_fpu",
+    ":cmsis",
+  ]
+  sources = [
+    "cmsis/CMSIS/DSP/Source/BasicMathFunctions/arm_mult_f32.c",
+    "cmsis/CMSIS/DSP/Source/FilteringFunctions/arm_biquad_cascade_df1_f32.c",
+    "cmsis/CMSIS/DSP/Source/FilteringFunctions/arm_biquad_cascade_df1_init_f32.c",
+    "cmsis/CMSIS/DSP/Source/FilteringFunctions/arm_fir_f32.c",
+    "cmsis/CMSIS/DSP/Source/FilteringFunctions/arm_fir_init_f32.c",
+    "cmsis/CMSIS/DSP/Source/SupportFunctions/arm_copy_f32.c",
+  ]
+}
+
+static_library("stm32f4xx_hal") {
+  public_configs = [
+    ":cmsis",
+    ":stm32f411xe",
+    ":stm32f4xx_hard_fpu",
+  ]
+  sources = [
+    "stm32f4/Src/stm32f4xx_hal.c",
+    "stm32f4/Src/stm32f4xx_hal_cortex.c",
+    "stm32f4/Src/stm32f4xx_hal_dma.c",
+    "stm32f4/Src/stm32f4xx_hal_dma_ex.c",
+    "stm32f4/Src/stm32f4xx_hal_flash.c",
+    "stm32f4/Src/stm32f4xx_hal_flash_ex.c",
+    "stm32f4/Src/stm32f4xx_hal_flash_ramfunc.c",
+    "stm32f4/Src/stm32f4xx_hal_gpio.c",
+    "stm32f4/Src/stm32f4xx_hal_i2c.c",
+    "stm32f4/Src/stm32f4xx_hal_i2c_ex.c",
+    "stm32f4/Src/stm32f4xx_hal_i2s.c",
+    "stm32f4/Src/stm32f4xx_hal_i2s_ex.c",
+    "stm32f4/Src/stm32f4xx_hal_pwr.c",
+    "stm32f4/Src/stm32f4xx_hal_pwr_ex.c",
+    "stm32f4/Src/stm32f4xx_hal_rcc.c",
+    "stm32f4/Src/stm32f4xx_hal_rcc_ex.c",
+    "stm32f4/Src/stm32f4xx_hal_spi.c",
+    "stm32f4/Src/stm32f4xx_hal_tim.c",
+    "stm32f4/Src/stm32f4xx_hal_tim_ex.c",
+    "stm32f4/Src/stm32f4xx_hal_uart.c",
+  ]
+}
+
+static_library("freertos") {
+  public_configs = [ ":cmsis_os" ]
+  configs = [
+    ":cmsis",
+    ":stm32f411xe",
+    ":stm32f4xx_hard_fpu",
+  ]
+  include_dirs = [
+    "freertos/FreeRTOS/Source/include",
+    "freertos/FreeRTOS/Source/portable/GCC/ARM_CM4F",
+  ]
+  sources = [
+    "freertos/FreeRTOS/Source/croutine.c",
+    "freertos/FreeRTOS/Source/event_groups.c",
+    "freertos/FreeRTOS/Source/list.c",
+    "freertos/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c",
+    "freertos/FreeRTOS/Source/portable/MemMang/heap_4.c",
+    "freertos/FreeRTOS/Source/queue.c",
+    "freertos/FreeRTOS/Source/tasks.c",
+    "freertos/FreeRTOS/Source/timers.c",
+  ]
+}
+
+static_library("freertos_plus") {
+  configs = [
+    ":cmsis",
+    ":stm32f411xe",
+    ":stm32f4xx_hard_fpu",
+  ]
+  sources = [ "freertos/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI/FreeRTOS_CLI.c" ]
+  public_deps = [ ":freertos" ]
+}
+
+static_library("micropython_py") {
+  configs = [
+    ":cmsis",
+    ":stm32f411xe",
+    ":stm32f4xx_hard_fpu",
+    ":micropython",
+  ]
+  sources = [
+    "micropython/py/argcheck.c",
+    "micropython/py/asmarm.c",
+    "micropython/py/asmbase.c",
+    "micropython/py/asmthumb.c",
+    "micropython/py/asmx64.c",
+    "micropython/py/asmx86.c",
+    "micropython/py/asmxtensa.c",
+    "micropython/py/bc.c",
+    "micropython/py/binary.c",
+    "micropython/py/builtinevex.c",
+    "micropython/py/builtinhelp.c",
+    "micropython/py/builtinimport.c",
+    "micropython/py/compile.c",
+    "micropython/py/emitbc.c",
+    "micropython/py/emitcommon.c",
+    "micropython/py/emitglue.c",
+    "micropython/py/emitinlinethumb.c",
+    "micropython/py/emitinlinextensa.c",
+    "micropython/py/emitnarm.c",
+    "micropython/py/emitnative.c",
+    "micropython/py/emitnthumb.c",
+    "micropython/py/emitnx64.c",
+    "micropython/py/emitnx86.c",
+    "micropython/py/emitnxtensa.c",
+    "micropython/py/emitnxtensawin.c",
+    "micropython/py/formatfloat.c",
+    "micropython/py/frozenmod.c",
+    "micropython/py/gc.c",
+    "micropython/py/lexer.c",
+    "micropython/py/malloc.c",
+    "micropython/py/map.c",
+    "micropython/py/modarray.c",
+    "micropython/py/modbuiltins.c",
+    "micropython/py/modcmath.c",
+    "micropython/py/modcollections.c",
+    "micropython/py/modgc.c",
+    "micropython/py/modio.c",
+    "micropython/py/modmath.c",
+    "micropython/py/modmicropython.c",
+    "micropython/py/modstruct.c",
+    "micropython/py/modsys.c",
+    "micropython/py/modthread.c",
+    "micropython/py/moduerrno.c",
+    "micropython/py/mpprint.c",
+    "micropython/py/mpstate.c",
+    "micropython/py/mpz.c",
+    "micropython/py/nativeglue.c",
+    "micropython/py/nlr.c",
+    "micropython/py/nlrpowerpc.c",
+    "micropython/py/nlrsetjmp.c",
+    "micropython/py/nlrthumb.c",
+    "micropython/py/nlrx64.c",
+    "micropython/py/nlrx86.c",
+    "micropython/py/nlrxtensa.c",
+    "micropython/py/obj.c",
+    "micropython/py/objarray.c",
+    "micropython/py/objattrtuple.c",
+    "micropython/py/objbool.c",
+    "micropython/py/objboundmeth.c",
+    "micropython/py/objcell.c",
+    "micropython/py/objclosure.c",
+    "micropython/py/objcomplex.c",
+    "micropython/py/objdeque.c",
+    "micropython/py/objdict.c",
+    "micropython/py/objenumerate.c",
+    "micropython/py/objexcept.c",
+    "micropython/py/objfilter.c",
+    "micropython/py/objfloat.c",
+    "micropython/py/objfun.c",
+    "micropython/py/objgenerator.c",
+    "micropython/py/objgetitemiter.c",
+    "micropython/py/objint.c",
+    "micropython/py/objint_longlong.c",
+    "micropython/py/objint_mpz.c",
+    "micropython/py/objlist.c",
+    "micropython/py/objmap.c",
+    "micropython/py/objmodule.c",
+    "micropython/py/objnamedtuple.c",
+    "micropython/py/objnone.c",
+    "micropython/py/objobject.c",
+    "micropython/py/objpolyiter.c",
+    "micropython/py/objproperty.c",
+    "micropython/py/objrange.c",
+    "micropython/py/objreversed.c",
+    "micropython/py/objset.c",
+    "micropython/py/objsingleton.c",
+    "micropython/py/objslice.c",
+    "micropython/py/objstr.c",
+    "micropython/py/objstringio.c",
+    "micropython/py/objstrunicode.c",
+    "micropython/py/objtuple.c",
+    "micropython/py/objtype.c",
+    "micropython/py/objzip.c",
+    "micropython/py/opmethods.c",
+    "micropython/py/pairheap.c",
+    "micropython/py/parse.c",
+    "micropython/py/parsenum.c",
+    "micropython/py/parsenumbase.c",
+    "micropython/py/persistentcode.c",
+    "micropython/py/profile.c",
+    "micropython/py/pystack.c",
+    "micropython/py/qstr.c",
+    "micropython/py/reader.c",
+    "micropython/py/repl.c",
+    "micropython/py/ringbuf.c",
+    "micropython/py/runtime.c",
+    "micropython/py/runtime_utils.c",
+    "micropython/py/scheduler.c",
+    "micropython/py/scope.c",
+    "micropython/py/sequence.c",
+    "micropython/py/showbc.c",
+    "micropython/py/smallint.c",
+    "micropython/py/stackctrl.c",
+    "micropython/py/stream.c",
+    "micropython/py/unicode.c",
+    "micropython/py/vm.c",
+    "micropython/py/vstr.c",
+    "micropython/py/warning.c",
+  ]
+  public_deps = [
+    ":gen-frozen",
+    ":gen-modules",
+    ":gen-qstr",
+    ":gen-version",
+  ]
+}
+
+static_library("micropython_lib") {
+  configs = [
+    ":cmsis",
+    ":stm32f411xe",
+    ":stm32f4xx_hard_fpu",
+  ]
+  public_configs = [ ":micropython" ]
+  sources = [
+    "micropython/lib/mp-readline/readline.c",
+    "micropython/lib/utils/pyexec.c",
+    "micropython/lib/utils/stdout_helpers.c",
+  ]
+  deps = [ ":micropython_py" ]
+}
+
+action("gen-version") {
+  script = "//firmware/tools/genhdr.py"
+  inputs = [ "//firmware/lib/micropython" ]
+  outputs = [ target_out_dir + "/genhdr/mpversion.h" ]
+  args = [
+    "gen_version",
+    rebase_path(inputs[0]),
+    rebase_path(outputs[0]),
+  ]
+}
+
+action("gen-modules") {
+  script = "//firmware/tools/genhdr.py"
+  inputs = [
+    "//firmware/lib/micropython",
+    "//firmware/lib/micropython/py/qstr.c",
+  ]
+  outputs = [ target_out_dir + "/genhdr/moduledefs.h" ]
+  args = [
+    "gen_modules",
+    rebase_path(inputs[0]),
+    rebase_path(outputs[0]),
+    rebase_path(inputs[1]),
+  ]
+}
+
+action("gen-qstr") {
+  script = "//firmware/tools/genhdr.py"
+  inputs = [
+    "//firmware/lib/micropython",
+    "//firmware/port/inc",
+  ]
+  outputs = [
+    target_out_dir + "/genhdr/qstrdefs.generated.h",
+    target_out_dir + "/genhdr/qstrdefs.preprocessed.h",
+  ]
+  args = [
+    "gen_qstr",
+    rebase_path(inputs[0]),
+    rebase_path(outputs[0]),
+    rebase_path(inputs[1]),
+  ]
+  deps = [ ":gen-modules" ]
+}
+
+action("gen-frozen") {
+  script = "//firmware/tools/genhdr.py"
+  inputs = [
+    "//firmware/lib/micropython",
+    "//firmware/port/src/frozentest.mpy",
+    target_out_dir + "/genhdr/qstrdefs.preprocessed.h",
+  ]
+  outputs = [ target_out_dir + "/_frozen_mpy.c" ]
+  args = [
+    "gen_frozen",
+    rebase_path(inputs[0]),
+    rebase_path(outputs[0]),
+    rebase_path(inputs[1]),
+    rebase_path(inputs[2]),
+  ]
+  deps = [ ":gen-qstr" ]
+}
