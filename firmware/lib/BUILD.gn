@@ -291,45 +291,39 @@ static_library("micropython_lib") {
 
 action("gen-version") {
   script = "//firmware/tools/genhdr.py"
-  inputs = [ "//firmware/lib/micropython" ]
-  outputs = [ target_out_dir + "/genhdr/mpversion.h" ]
+  inputs = []
+  outputs = [ "${target_out_dir}/genhdr/mpversion.h" ]
   args = [
+    rebase_path("//firmware/lib/micropython"),
     "gen_version",
-    rebase_path(inputs[0]),
     rebase_path(outputs[0]),
   ]
 }
 
 action("gen-modules") {
   script = "//firmware/tools/genhdr.py"
-  inputs = [
-    "//firmware/lib/micropython",
-    "//firmware/lib/micropython/py/qstr.c",
-  ]
-  outputs = [ target_out_dir + "/genhdr/moduledefs.h" ]
+  inputs = [ "//firmware/lib/micropython/py/qstr.c" ]
+  outputs = [ "${target_out_dir}/genhdr/moduledefs.h" ]
   args = [
+    rebase_path("//firmware/lib/micropython"),
     "gen_modules",
-    rebase_path(inputs[0]),
     rebase_path(outputs[0]),
-    rebase_path(inputs[1]),
+    rebase_path(inputs[0]),
   ]
 }
 
 action("gen-qstr") {
   script = "//firmware/tools/genhdr.py"
-  inputs = [
-    "//firmware/lib/micropython",
-    "//firmware/port/inc",
-  ]
+  inputs = [ "//firmware/port/inc" ]
   outputs = [
-    target_out_dir + "/genhdr/qstrdefs.generated.h",
-    target_out_dir + "/genhdr/qstrdefs.preprocessed.h",
+    "${target_out_dir}/genhdr/qstrdefs.generated.h",
+    "${target_out_dir}/genhdr/qstrdefs.preprocessed.h",
   ]
   args = [
+    rebase_path("//firmware/lib/micropython"),
     "gen_qstr",
-    rebase_path(inputs[0]),
     rebase_path(outputs[0]),
-    rebase_path(inputs[1]),
+    rebase_path(inputs[0]),
   ]
   deps = [ ":gen-modules" ]
 }
@@ -337,17 +331,16 @@ action("gen-qstr") {
 action("gen-frozen") {
   script = "//firmware/tools/genhdr.py"
   inputs = [
-    "//firmware/lib/micropython",
     "//firmware/port/src/frozentest.mpy",
-    target_out_dir + "/genhdr/qstrdefs.preprocessed.h",
+    "${target_out_dir}/genhdr/qstrdefs.preprocessed.h",
   ]
-  outputs = [ target_out_dir + "/_frozen_mpy.c" ]
+  outputs = [ "${target_out_dir}/_frozen_mpy.c" ]
   args = [
+    rebase_path("//firmware/lib/micropython"),
     "gen_frozen",
-    rebase_path(inputs[0]),
     rebase_path(outputs[0]),
+    rebase_path(inputs[0]),
     rebase_path(inputs[1]),
-    rebase_path(inputs[2]),
   ]
   deps = [ ":gen-qstr" ]
 }

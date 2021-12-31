@@ -1,115 +1,142 @@
-'''
-Copyright (c) 2016-2020, TIANLAN.tech
-SPDX-License-Identifier: Apache-2.0
+#!/usr/bin/env python3
+# Copyright (c) 2021 TIANLAN.tech
+# SPDX-License-Identifier: Apache-2.0
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-'''
+# Language: Python
 
 import os
-import sys
-from fire import Fire
-from io import StringIO
+from argparse import ArgumentParser
+from inspect import getfullargspec
 
 
 class genhdr:
-    def __init__(self):
-        self.c = ''
-        self.path = ''
-
-    def join(self, RootDir):
+    def __init__(self, RootDir):
         assert os.path.isdir(RootDir)
-        self.path = RootDir + '/py'
-        sys.path.insert(0, self.path)
+        self.path = RootDir
 
-    def cflags(self, *cflag):
-        pass
-
-    def gen_modules(self, RootDir, OutFile, *Source):
-        for fp in Source:
-            assert os.path.isfile(fp)
-        assert os.path.isdir(os.path.dirname(OutFile))
-        self.join(RootDir)
-
-        from makemoduledefs import find_module_registrations, generate_module_table_header
-        from contextlib import redirect_stdout
-
-        modules = set()
-        for fp in Source:
-            modules |= find_module_registrations(fp)
-        fo = StringIO()
-        with redirect_stdout(fo):
-            generate_module_table_header(sorted(modules))
-        with open(OutFile, 'w') as f:
-            f.writelines(fo.getvalue())
-
-    def gen_version(self, RootDir, OutFile):
-        assert os.path.isdir(os.path.dirname(OutFile))
-        self.join(RootDir)
-
-        from makeversionhdr import make_version_header
-        from contextlib import redirect_stdout
-
-        os.chdir(RootDir)
-        fo = StringIO()
-        with redirect_stdout(fo):
-            make_version_header(OutFile)
-        fo.getvalue()
-
-    def gen_qstr(self, RootDir, OutFile, WorkDir, Include='.', QSTR=''):
-        assert os.path.isdir(os.path.dirname(OutFile))
-        assert os.path.isdir(WorkDir)
-        self.join(RootDir)
-
+    def gen_modules(self, OutFile, *Source):
+        RootDir = self.path
         OutDir = os.path.dirname(OutFile)
-        Include = [Include, RootDir, WorkDir, '/'.join(OutDir.split('/')[:-1])]
 
-        def f(x): return x.endswith(".c")
+        assert os.path.isdir(OutDir)
+        assert not False in (os.path.isfile(f) for f in Source)
 
-        fn = [f'{self.path}/{n}' for n in os.listdir(self.path) if f(n)]
-        fn += [f'{WorkDir}/{n}' for n in os.listdir(WorkDir) if f(n)]
-        fp = f'{OutDir}/qstr.i.last'
+        cmds = []
+        cmds.append(f'''python {RootDir}/py/makemoduledefs.py \
+                        {" ".join(Source)} \
+                        > {OutFile}''')
+        os.system("&&".join(cmds))
 
-        command = f'arm-none-eabi-gcc -E -DNO_QSTR -DMICROPY_ROM_TEXT_COMPRESSION=1 -I{" -I".join(Include)} {" ".join(fn)}'
-        os.system(f'{command} > {fp}')
-        ft = f'{OutDir}/qstr.split'
+    def gen_version(self, OutFile):
+        RootDir = self.path
+        OutDir = os.path.dirname(OutFile)
+        assert os.path.isdir(OutDir)
 
-        command = f'python {self.path}/makeqstrdefs.py split qstr {fp} {OutDir}/qstr {OutDir}/qstrdefs.collected.h'
-        os.system(f'{command} > /dev/null')
-        os.system(f'touch {ft} > /dev/null')
-        ft = f'{OutDir}/qstrdefs.collected.h'
+        cmds = []
+        cmds.append(f'''cd {RootDir}''')
+        cmds.append(f'''python py/makeversionhdr.py \
+                        {OutFile}''')
+        os.system("&&".join(cmds))
 
-        command = f'python {self.path}/makeqstrdefs.py cat qstr _ {OutDir}/qstr {ft}'
-        os.system(f'{command} > /dev/null')
-        fp = f'{OutDir}/qstrdefs.preprocessed.h'
+    def gen_qstr(self, OutFile, WorkDir, Include=".", QSTR=""):
+        RootDir = self.path
+        OutDir = os.path.dirname(OutFile)
 
-        command = f'cat {self.path}/qstrdefs.h {QSTR} {ft}'
-        command += """| sed 's/^Q(.*)/"&"/'"""
-        command += f'| arm-none-eabi-gcc -E -DNO_QSTR -DMICROPY_ROM_TEXT_COMPRESSION=1 -I{" -I".join(Include)} -'
-        command += """| sed 's/^\\"\(Q(.*)\)\\"/\\1/'"""
-        command += f' > {fp}'
-        os.system(f'{command}')
+        assert os.path.isdir(OutDir)
+        assert os.path.isdir(WorkDir)
+        assert os.path.isdir(Include)
 
-        command = f'python {self.path}/makeqstrdata.py {fp} > {OutFile}'
-        os.system(f'{command}')
+        Include, Files = [Include], []
+        Include += [RootDir, WorkDir, "{}/..".format(OutDir)]
 
-    def gen_frozen(self, RootDir, OutFile, Files, QSTR_HEAD):
-        assert os.path.isdir(os.path.dirname(OutFile))
-        self.join(RootDir)
+        for p in ("{}/py".format(RootDir), WorkDir):
+            for f in os.listdir(p):
+                if not f.endswith(".c"):
+                    continue
+                Files.append("{}/{}".format(p, f))
 
-        command = f'python {RootDir}/tools/mpy-tool.py --freeze --qstr-header {QSTR_HEAD} -mlongint-impl none {Files}'
-        command += f' > {OutFile}'
-        os.system(f'{command}')
+        CC = "arm-none-eabi-gcc"
+        cmds = []
+
+        cmds.append(f'''{CC} -E \
+                        -DNO_QSTR \
+                        -DMICROPY_ROM_TEXT_COMPRESSION=1 \
+                        {" ".join(["-I" + i for i in Include])} \
+                        {" ".join(Files)} \
+                        > {OutDir}/qstr.i.last''')
+
+        cmds.append(f'''python {RootDir}/py/makeqstrdefs.py \
+                        split \
+                        qstr {OutDir}/qstr.i.last {OutDir}/qstr \
+                        {OutDir}/qstrdefs.collected.h \
+                        > /dev/null''')
+
+        cmds.append(f'''touch {OutDir}/qstr.split \
+                        > /dev/null''')
+
+        cmds.append(f'''python {RootDir}/py/makeqstrdefs.py cat qstr _ {OutDir}/qstr {OutDir}/qstrdefs.collected.h \
+                        > /dev/null''')
+        cmds.append(f'''cat {RootDir}/py/qstrdefs.h {QSTR} {OutDir}/qstrdefs.collected.h \
+                        | sed 's/^Q(.*)/"&"/' \
+                        | {CC} -E \
+                          -DNO_QSTR \
+                          -DMICROPY_ROM_TEXT_COMPRESSION=1 \
+                          {" ".join(["-I" + i for i in Include])} - \
+                        | sed 's/^\\"\(Q(.*)\)\\"/\\1/' \
+                        > {OutDir}/qstrdefs.preprocessed.h''')
+        cmds.append(f'''python {RootDir}/py/makeqstrdata.py {OutDir}/qstrdefs.preprocessed.h \
+                        > {OutFile}''')
+
+        os.system("&&".join(cmds))
+
+    def gen_frozen(self, OutFile, Files, QSTR_HEAD):
+        RootDir = self.path
+        OutDir = os.path.dirname(OutFile)
+        assert os.path.isdir(OutDir)
+
+        cmds = []
+        cmds.append(f'''python {RootDir}/tools/mpy-tool.py \
+                        --freeze \
+                        --qstr-header {QSTR_HEAD} \
+                        -mlongint-impl none {Files} \
+                        > {OutFile}''')
+
+        os.system("&&".join(cmds))
+
+
+def main():
+    p = ArgumentParser()
+
+    p.add_argument("RootDir")
+    s = p.add_subparsers(dest="method")
+
+    for k, v in vars(genhdr).items():
+        if not k.startswith("gen_"):
+            continue
+        t = s.add_parser(k)
+        c = getfullargspec(v)
+        for i, a in enumerate(c.args):
+            if a == "self":
+                continue
+            elif c.defaults and len(c.args) - i <= len(c.defaults):
+                d = c.defaults[i - len(c.args) + len(c.defaults)]
+                t.add_argument("-{}".format(a), type=str, default=d)
+            else:
+                t.add_argument(a, type=str)
+        if c.varargs:
+            t.add_argument(c.varargs, type=str, nargs="+", default=[])
+
+    args = p.parse_args()
+    mods, func = genhdr(args.RootDir), args.method
+
+    if func == "gen_modules":
+        mods.gen_modules(args.OutFile, *args.Source)
+    else:
+        args = vars(args)
+        args.pop("method")
+        args.pop("RootDir")
+        getattr(mods, func)(**args)
 
 
 if __name__ == "__main__":
-    Fire(genhdr)
+    main()
