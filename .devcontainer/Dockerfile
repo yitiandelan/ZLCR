@@ -1,16 +1,12 @@
-FROM archlinux
+FROM archlinux:base-devel
 
-RUN curl "https://www.archlinux.org/mirrorlist/?country=CN&protocol=https" > /etc/pacman.d/mirrorlist \
-    && sed -i -E "s/^#S/S/g" /etc/pacman.d/mirrorlist \
-    && pacman -Syu --noconfirm --needed sudo git git-lfs \
-    && useradd --create-home tianlan \
+RUN curl "https://archlinux.org/mirrorlist/?country=CN&protocol=https" \
+    | sed -r "s/^#Server/Server/;/^#/d;" > /etc/pacman.d/mirrorlist \
+    && pacman -Syu --noconfirm \
     && echo "tianlan ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+    && useradd --create-home tianlan \
+    && pacman -Sy --noconfirm --needed git git-lfs python make ninja gn \
+    && pacman -Sy --noconfirm --needed arm-none-eabi-gcc arm-none-eabi-newlib \
     && pacman -Sc --noconfirm
 
 USER tianlan
-
-RUN sudo pacman -Sy --noconfirm --needed \
-    arm-none-eabi-gcc arm-none-eabi-newlib make ninja gn \
-    python python-pip \
-    && sudo pacman -Sc --noconfirm \
-    && pip install --user fire

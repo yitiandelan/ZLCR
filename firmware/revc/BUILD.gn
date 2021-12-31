@@ -1,0 +1,59 @@
+config("config") {
+  include_dirs = [ "inc" ]
+}
+
+static_library("zlcr_core") {
+  public_configs = [ ":config" ]
+  configs = [
+    "../lib:cmsis",
+    "../lib:stm32f411xe",
+    "../lib:stm32f4xx_hard_fpu",
+  ]
+  sources = [
+    "src/zlcr_core.c",
+    "src/zlcr_core_dds.c",
+    "src/zlcr_core_mixer.c",
+  ]
+  public_deps = [ "../lib:cmsis_dsp" ]
+}
+
+static_library("zlcr_bsp") {
+  public_configs = [ ":config" ]
+  configs = [ "../lib:cmsis_os" ]
+  sources = [ "src/zlcr_beta_bsp.c" ]
+  deps = [ "../lib:stm32f4xx_hal" ]
+  public_deps = [ ":zlcr_core" ]
+}
+
+executable("zlcr_revc") {
+  ldflags = [
+    "-mthumb",
+    "-mcpu=cortex-m4",
+    "-mfloat-abi=hard",
+    "-mfpu=fpv4-sp-d16",
+    "-T../firmware/revc/gcc/STM32F411CEUx_FLASH.ld",
+  ]
+  sources = [
+    "${target_out_dir}/../lib/test/_frozen_mpy.c",
+    "gcc/startup_stm32f411xe.s",
+    "src/cmsis_os.c",
+    "src/freertos.c",
+    "src/main.c",
+    "src/stm32f4xx_hal_msp.c",
+    "src/stm32f4xx_hal_timebase_tim.c",
+    "src/stm32f4xx_it.c",
+    "src/system_stm32f4xx.c",
+  ]
+  deps = [
+    ":zlcr_bsp",
+    "../lib:freertos_plus",
+    "../lib:gen-frozen",
+    "../lib:micropython_lib",
+    "../lib:stm32f4xx_hal",
+  ]
+  libs = [
+    "m",
+    "c",
+    "nosys",
+  ]
+}

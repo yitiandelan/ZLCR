@@ -8,7 +8,7 @@ config("stm32f411xe") {
     "USE_HAL_DRIVER",
   ]
   include_dirs = [
-    "//firmware/rtos/inc",
+    "../revc/inc",
     "stm32f4/Inc",
     "cmsis_device_f4/Include",
   ]
@@ -43,7 +43,7 @@ config("cmsis") {
 
 config("cmsis_os") {
   include_dirs = [
-    "//firmware/rtos/inc",
+    "../revc/inc",
     "freertos/FreeRTOS/Source/include",
     "freertos/FreeRTOS/Source/portable/GCC/ARM_CM4F",
     "freertos/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI",
@@ -55,7 +55,7 @@ config("micropython") {
     "micropython",
     "micropython/lib/utils",
     "micropython/lib/mp-readline",
-    "../port/inc",
+    "test/inc",
     target_out_dir,
   ]
 }
@@ -290,22 +290,22 @@ static_library("micropython_lib") {
 }
 
 action("gen-version") {
-  script = "//firmware/tools/genhdr.py"
+  script = "../scripts/genhdr.py"
   inputs = []
   outputs = [ "${target_out_dir}/genhdr/mpversion.h" ]
   args = [
-    rebase_path("//firmware/lib/micropython"),
+    rebase_path("../lib/micropython"),
     "gen_version",
     rebase_path(outputs[0]),
   ]
 }
 
 action("gen-modules") {
-  script = "//firmware/tools/genhdr.py"
-  inputs = [ "//firmware/lib/micropython/py/qstr.c" ]
+  script = "../scripts/genhdr.py"
+  inputs = [ "../lib/micropython/py/qstr.c" ]
   outputs = [ "${target_out_dir}/genhdr/moduledefs.h" ]
   args = [
-    rebase_path("//firmware/lib/micropython"),
+    rebase_path("../lib/micropython"),
     "gen_modules",
     rebase_path(outputs[0]),
     rebase_path(inputs[0]),
@@ -313,14 +313,14 @@ action("gen-modules") {
 }
 
 action("gen-qstr") {
-  script = "//firmware/tools/genhdr.py"
-  inputs = [ "//firmware/port/inc" ]
+  script = "../scripts/genhdr.py"
+  inputs = [ "test/inc" ]
   outputs = [
     "${target_out_dir}/genhdr/qstrdefs.generated.h",
     "${target_out_dir}/genhdr/qstrdefs.preprocessed.h",
   ]
   args = [
-    rebase_path("//firmware/lib/micropython"),
+    rebase_path("../lib/micropython"),
     "gen_qstr",
     rebase_path(outputs[0]),
     rebase_path(inputs[0]),
@@ -329,14 +329,14 @@ action("gen-qstr") {
 }
 
 action("gen-frozen") {
-  script = "//firmware/tools/genhdr.py"
+  script = "../scripts/genhdr.py"
   inputs = [
-    "//firmware/port/src/frozentest.mpy",
+    "test/src/frozentest.mpy",
     "${target_out_dir}/genhdr/qstrdefs.preprocessed.h",
   ]
-  outputs = [ "${target_out_dir}/_frozen_mpy.c" ]
+  outputs = [ "${target_out_dir}/test/_frozen_mpy.c" ]
   args = [
-    rebase_path("//firmware/lib/micropython"),
+    rebase_path("../lib/micropython"),
     "gen_frozen",
     rebase_path(outputs[0]),
     rebase_path(inputs[0]),

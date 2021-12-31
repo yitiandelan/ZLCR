@@ -6,10 +6,8 @@
                 "limitSymbolsToIncludedHeaders": true
             },
             "includePath": [
-                "${workspaceFolder}/firmware/core/inc",
-                "${workspaceFolder}/firmware/bsp/inc",
-                "${workspaceFolder}/firmware/port/inc",
-                "${workspaceFolder}/firmware/rtos/inc",
+                "${workspaceFolder}/firmware/revc/inc",
+                "${workspaceFolder}/firmware/lib/test/inc",
                 "${workspaceFolder}/firmware/lib/cmsis/CMSIS/DSP/Include",
                 "${workspaceFolder}/firmware/lib/cmsis/CMSIS/Core/Include",
                 "${workspaceFolder}/firmware/lib/cmsis_device_f4/Include",
@@ -19,7 +17,7 @@
                 "${workspaceFolder}/firmware/lib/freertos/FreeRTOS/Source/portable/GCC/ARM_CM4F",
                 "${workspaceFolder}/firmware/lib/freertos/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI",
                 "${workspaceFolder}/firmware/lib/micropython",
-                "${workspaceFolder}/build/eabi/obj/firmware/lib"
+                "${workspaceFolder}/build/arm-none-eabi/obj/firmware/lib/genhdr"
             ],
             "defines": [
                 "USE_HAL_DRIVER",
